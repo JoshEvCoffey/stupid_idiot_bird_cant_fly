@@ -1,3 +1,5 @@
+import os
+os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
 import pygame
 import random
 
@@ -12,7 +14,7 @@ class Top_pipe(pygame.sprite.Sprite):
     def __init__(self, bottom_pipe):
         super().__init__()
         
-        self.image = pygame.image.load("top_pipe.png").convert()
+        self.image = pygame.image.load("resources/top_pipe.png").convert()
         self.image.set_colorkey(WHITE)
         self.rect = self.image.get_rect()
         self.rect.x = bottom_pipe.rect.x
@@ -32,11 +34,11 @@ class Bottom_pipe(pygame.sprite.Sprite):
     def __init__(self):
         super().__init__()
         
-        self.image = pygame.image.load("bottom_pipe.png").convert()
+        self.image = pygame.image.load("resources/bottom_pipe.png").convert()
         self.image.set_colorkey(WHITE)
         self.rect = self.image.get_rect()
         self.rect.x = 1152
-        self.rect.y = random.randint(250, 592)
+        self.rect.y = random.randint(250, 598)
         
     def update(self):
         self.rect.x -= 5

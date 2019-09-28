@@ -1,3 +1,5 @@
+import os
+os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
 import pygame
 
 WHITE = (255,255,255)
@@ -11,7 +13,7 @@ class Bird(pygame.sprite.Sprite):
     def __init__(self):
         super().__init__()
         
-        self.image = pygame.image.load("stupid_bird.png").convert()
+        self.image = pygame.image.load("resources/stupid_bird.png").convert()
         self.image.set_colorkey(WHITE)
         self.rect = self.image.get_rect()
         
