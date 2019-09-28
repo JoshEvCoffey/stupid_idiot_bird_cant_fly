@@ -59,9 +59,9 @@ class Game(object):
 		self.cloud_timer = 10
 		self.game_over = False
 		
-		self.gravity = 8
+		self.gravity = 15
 		self.player_x = 200
-		self.player_y = SCREEN_HEIGHT / 2
+		self.player_y = SCREEN_HEIGHT / 10
 		self.player_velo_y = 0
 		
 		self.hop_sound = pygame.mixer.Sound("resources/hop.ogg")
