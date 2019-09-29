@@ -8,6 +8,7 @@ import cloud_sprites
 # Constants
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
+GREEN = (0, 255, 0)
 SCREEN_WIDTH = 1152
 SCREEN_HEIGHT = 648
 
@@ -203,12 +204,38 @@ def main():
 	
 	pygame.display.set_icon(icon)
 	pygame.display.set_caption("Stupid Idiot Bird Can't Fly")
-	pygame.mouse.set_visible(False)
+	
+	background = pygame.image.load("resources/sky.png").convert()
+	play_button_image = pygame.image.load("resources/play_button.png").convert()
+	play_button_image.set_colorkey(WHITE)
+	
+	play_button_center_x = (SCREEN_WIDTH // 2) - 141
 	
 	done = False
 	clock = pygame.time.Clock()
 	
 	game = Game()
+	
+	intro = True
+	
+	while intro:
+		
+		mouse = pygame.mouse.get_pos()
+		
+		for event in pygame.event.get():
+			if event.type == pygame.QUIT:
+				intro = False
+				done = True
+			elif event.type == pygame.KEYDOWN:
+				if event.key == pygame.K_SPACE:
+					intro = False
+				
+		screen.blit(background, [0, 0])
+		screen.blit(play_button_image, [play_button_center_x, 400])
+		
+		pygame.display.flip()
+	
+	pygame.mouse.set_visible(False)
 	
 	while not done:
 		done = game.process_events()
