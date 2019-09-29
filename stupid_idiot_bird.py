@@ -56,12 +56,14 @@ class Game(object):
 	def __init__(self):
 		self.score = 0
 		self.pipe_timer = 30
-		self.cloud_timer = 10
+		self.pipe_gap = 225
+		self.cloud_timer = 50
 		self.game_over = False
+		self.first_input_recieved = False
 		
 		self.gravity = 15
 		self.player_x = 200
-		self.player_y = SCREEN_HEIGHT / 10
+		self.player_y = SCREEN_HEIGHT / 2
 		self.player_velo_y = 0
 		
 		self.hop_sound = pygame.mixer.Sound("resources/hop.ogg")
@@ -77,14 +79,19 @@ class Game(object):
 		self.bird.moveTo(self.player_x, self.player_y)
 		self.all_sprites_list.add(self.bird)
 		
+	def hop(self):
+		self.player_velo_y = -15
+		self.hop_sound.play()
+		
 	def process_events(self):
 		for event in pygame.event.get():
 			if event.type == pygame.QUIT:
 				return True
 			if event.type == pygame.KEYDOWN:
 				if event.key == pygame.K_UP or event.key == pygame.K_SPACE and not self.game_over:
-					self.player_velo_y = -15
-					self.hop_sound.play()
+					self.hop()
+					if not self.first_input_recieved:
+						self.first_input_recieved = True
 				elif event.key == pygame.K_r and self.game_over:
 					self.__init__()
 		
@@ -95,11 +102,11 @@ class Game(object):
 		self.cloud_timer += 1
 		horizontal_hit = False
 		
-		if self.pipe_timer >= 60:
+		if self.pipe_timer >= 60 and self.first_input_recieved:
 			self.pipe_timer = 0
-			bottom_pipe = pipe_sprites.Bottom_pipe()
-			between_pipe = pipe_sprites.Between_pipe(bottom_pipe)
-			top_pipe = pipe_sprites.Top_pipe(bottom_pipe)
+			bottom_pipe = pipe_sprites.Bottom_pipe(self.pipe_gap)
+			between_pipe = pipe_sprites.Between_pipe(bottom_pipe, self.pipe_gap)
+			top_pipe = pipe_sprites.Top_pipe(bottom_pipe, self.pipe_gap)
 			
 			self.all_sprites_list.add(bottom_pipe)
 			self.all_sprites_list.add(top_pipe)
@@ -135,6 +142,8 @@ class Game(object):
 		
 		for zone in score_hit_list:
 			self.score += 1
+			if self.score % 10 == 0:
+				self.pipe_gap -= 10
 		
 		for pipe in pipe_hit_list:
 			if not self.game_over:
@@ -154,7 +163,9 @@ class Game(object):
 			elif self.player_velo_y < 0 and isinstance(pipe, pipe_sprites.Top_pipe) and not horizontal_hit: 
 				self.bird.rect.top = pipe.rect.bottom
 				self.player_velo_y = 0
-			
+		
+		if not self.first_input_recieved and self.player_y > SCREEN_HEIGHT / 2:
+			self.hop()
 		
 	def display_frame(self, screen):
 		screen.blit(self.background_image, [0, 0])
@@ -163,6 +174,13 @@ class Game(object):
 		self.all_sprites_list.draw(screen)
 		font = pygame.font.SysFont("Calibri", 25, True, False)
 		screen.blit(render('Score: ' + str(self.score), font), [10, 10])
+		
+		if not self.first_input_recieved:
+			font = pygame.font.SysFont("Calibri", 30, True, False)
+			text = font.render("press space to hop", True, WHITE)
+			center_x = (SCREEN_WIDTH // 2) - (text.get_width() // 2)
+			y = 500
+			screen.blit(render("press space to hop", font), [center_x, y])
 		
 		if self.game_over:
 			font = pygame.font.SysFont("Calibri", 40, True, False)

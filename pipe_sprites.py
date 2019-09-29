@@ -4,6 +4,7 @@ import pygame
 import random
 
 WHITE = (255,255,255)
+PIPE_HEIGHT = 860
 
 class Top_pipe(pygame.sprite.Sprite):
     """
@@ -11,14 +12,14 @@ class Top_pipe(pygame.sprite.Sprite):
     Derived from Sprite class in pygame
     """
     
-    def __init__(self, bottom_pipe):
+    def __init__(self, bottom_pipe, scorezone_height = 200):
         super().__init__()
         
         self.image = pygame.image.load("resources/top_pipe.png").convert()
         self.image.set_colorkey(WHITE)
         self.rect = self.image.get_rect()
         self.rect.x = bottom_pipe.rect.x
-        self.rect.y = bottom_pipe.rect.y - 1060
+        self.rect.y = bottom_pipe.rect.y - (PIPE_HEIGHT + scorezone_height)
         
     def update(self):
         self.rect.x -= 5
@@ -31,14 +32,14 @@ class Bottom_pipe(pygame.sprite.Sprite):
     Derived from Sprite class in pygame
     """
     
-    def __init__(self):
+    def __init__(self, scorezone_height = 200):
         super().__init__()
         
         self.image = pygame.image.load("resources/bottom_pipe.png").convert()
         self.image.set_colorkey(WHITE)
         self.rect = self.image.get_rect()
         self.rect.x = 1152
-        self.rect.y = random.randint(250, 598)
+        self.rect.y = random.randint(scorezone_height + 50, 598)
         
     def update(self):
         self.rect.x -= 5
@@ -47,13 +48,13 @@ class Bottom_pipe(pygame.sprite.Sprite):
         
 class Between_pipe(pygame.sprite.DirtySprite):
         
-        def __init__(self, bottom_pipe):
+        def __init__(self, bottom_pipe, scorezone_height = 200):
             super().__init__()
             
-            self.image = pygame.Surface([75, 200])
+            self.image = pygame.Surface([75, scorezone_height])
             self.rect = self.image.get_rect()
             self.rect.x = bottom_pipe.rect.x
-            self.rect.y = bottom_pipe.rect.y - 200
+            self.rect.y = bottom_pipe.rect.y - scorezone_height
             self.visible = 0
         
         def update(self):
