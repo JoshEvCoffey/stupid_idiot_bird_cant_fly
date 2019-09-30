@@ -143,7 +143,7 @@ class Game(object):
 		
 		for zone in score_hit_list:
 			self.score += 1
-			if self.score % 10 == 0:
+			if self.score % 10 == 0 and self.pipe_gap > 145:
 				self.pipe_gap -= 10
 		
 		for pipe in pipe_hit_list:
