@@ -4,6 +4,7 @@ import pygame
 import stupid_bird_sprite
 import pipe_sprites
 import cloud_sprites
+import shelve
 
 # Constants
 WHITE = (255, 255, 255)
@@ -80,6 +81,14 @@ class Game(object):
 		self.bird.moveTo(self.player_x, self.player_y)
 		self.all_sprites_list.add(self.bird)
 		
+		high_score_tracker = shelve.open('high_score.txt')
+		try:
+			self.high_score = high_score_tracker['high_score']
+		except:
+			self.high_score = 0
+			high_score_tracker['high_score'] = 0
+		high_score_tracker.close()
+		
 	def hop(self):
 		self.player_velo_y = -15
 		self.hop_sound.play()
@@ -87,6 +96,10 @@ class Game(object):
 	def process_events(self):
 		for event in pygame.event.get():
 			if event.type == pygame.QUIT:
+				high_score_tracker = shelve.open('high_score.txt')
+				if self.high_score > high_score_tracker['high_score']:
+					high_score_tracker['high_score'] = self.high_score
+				high_score_tracker.close()
 				return True
 			if event.type == pygame.KEYDOWN:
 				if event.key == pygame.K_UP or event.key == pygame.K_SPACE and not self.game_over:
@@ -94,6 +107,10 @@ class Game(object):
 					if not self.first_input_recieved:
 						self.first_input_recieved = True
 				elif event.key == pygame.K_r and self.game_over:
+					high_score_tracker = shelve.open('high_score.txt')
+					if self.high_score > high_score_tracker['high_score']:
+						high_score_tracker['high_score'] = self.high_score
+					high_score_tracker.close()
 					self.__init__()
 		
 		return False
@@ -167,6 +184,9 @@ class Game(object):
 		
 		if not self.first_input_recieved and self.player_y > (SCREEN_HEIGHT / 2) + 30:
 			self.hop()
+			
+		if self.score > self.high_score:
+			self.high_score = self.score
 		
 	def display_frame(self, screen):
 		screen.blit(self.background_image, [0, 0])
@@ -175,6 +195,8 @@ class Game(object):
 		self.all_sprites_list.draw(screen)
 		font = pygame.font.SysFont("Calibri", 25, True, False)
 		screen.blit(render('Score: ' + str(self.score), font), [10, 10])
+		if not self.high_score == 0:
+			screen.blit(render('High Score: ' + str(self.high_score), font), [10, 40])
 		
 		if not self.first_input_recieved:
 			font = pygame.font.SysFont("Calibri", 30, True, False)
