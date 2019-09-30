@@ -165,7 +165,7 @@ class Game(object):
 				self.bird.rect.top = pipe.rect.bottom
 				self.player_velo_y = 0
 		
-		if not self.first_input_recieved and self.player_y > SCREEN_HEIGHT / 2:
+		if not self.first_input_recieved and self.player_y > (SCREEN_HEIGHT / 2) + 30:
 			self.hop()
 		
 	def display_frame(self, screen):
@@ -193,7 +193,7 @@ class Game(object):
 		pygame.display.flip()
 		
 def main():
-	pygame.mixer.pre_init(44100, -16, 2, 512)
+	pygame.mixer.pre_init(44100, -16, 2, 1024)
 	pygame.mixer.init()
 	pygame.init()
 	
@@ -208,8 +208,18 @@ def main():
 	background = pygame.image.load("resources/sky.png").convert()
 	play_button_image = pygame.image.load("resources/play_button.png").convert()
 	play_button_image.set_colorkey(WHITE)
+	play_button_hover_image = pygame.image.load("resources/play_button_hover.png").convert()
+	play_button_hover_image.set_colorkey(WHITE)
 	
-	play_button_center_x = (SCREEN_WIDTH // 2) - 141
+	button_x_1 = SCREEN_WIDTH // 2 - 141
+	button_x_2 = SCREEN_WIDTH // 2 + 140
+	button_y_1 = 400
+	button_y_2 = 533
+	
+	title_image = pygame.image.load("resources/title.png").convert()
+	title_image.set_colorkey(WHITE)
+	title_x = SCREEN_WIDTH // 2 - 217
+	title_y = 50
 	
 	done = False
 	clock = pygame.time.Clock()
@@ -219,19 +229,25 @@ def main():
 	intro = True
 	
 	while intro:
-		
-		mouse = pygame.mouse.get_pos()
-		
 		for event in pygame.event.get():
 			if event.type == pygame.QUIT:
 				intro = False
 				done = True
-			elif event.type == pygame.KEYDOWN:
-				if event.key == pygame.K_SPACE:
-					intro = False
-				
+			elif event.type == pygame.MOUSEBUTTONDOWN:
+				if event.button == 1:
+					if event.pos[0] in range(button_x_1, button_x_2) and event.pos[1] in range(button_y_1, button_y_2):
+						intro = False
+		
+		mouse = pygame.mouse.get_pos()
+		
 		screen.blit(background, [0, 0])
-		screen.blit(play_button_image, [play_button_center_x, 400])
+		
+		screen.blit(title_image, [title_x, title_y])
+		
+		if mouse[0] in range(button_x_1, button_x_2) and mouse[1] in range(button_y_1, button_y_2):
+			screen.blit(play_button_hover_image, [button_x_1, button_y_1])
+		else:
+			screen.blit(play_button_image, [button_x_1, button_y_1])
 		
 		pygame.display.flip()
 	
