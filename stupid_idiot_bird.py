@@ -1,17 +1,19 @@
 import os
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
+#import ctypes
 import pygame
 import stupid_bird_sprite
 import pipe_sprites
 import cloud_sprites
 import shelve
+import time
+import math
 
 # Constants
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
 GREEN = (0, 255, 0)
-SCREEN_WIDTH = 1152
-SCREEN_HEIGHT = 648
+SKY = (0, 204, 255)
 
 _circle_cache = {}
 def _circlepoints(r):
@@ -60,17 +62,20 @@ class Game(object):
 		self.pipe_timer = 30
 		self.pipe_gap = 225
 		self.cloud_timer = 50
+		self.start_time = time.time()
 		self.game_over = False
 		self.first_input_recieved = False
+		self.show_fps = False
+		self.fps = 0
+		self.screen_width, self.screen_height = pygame.display.get_surface().get_size()
 		
 		self.gravity = 15
-		self.player_x = 200
-		self.player_y = SCREEN_HEIGHT / 2
+		self.player_x = self.screen_width / 5
+		self.player_y = self.screen_height / 2
 		self.player_velo_y = 0
 		
 		self.hop_sound = pygame.mixer.Sound("resources/hop.ogg")
 		self.hit_sound = pygame.mixer.Sound("resources/hit.ogg")
-		self.background_image = pygame.image.load("resources/sky.png").convert()
 		
 		self.clouds_list = pygame.sprite.Group()
 		self.pipes_list = pygame.sprite.Group()
@@ -100,25 +105,30 @@ class Game(object):
 				if self.high_score > high_score_tracker['high_score']:
 					high_score_tracker['high_score'] = self.high_score
 				high_score_tracker.close()
-				return True
+				return False
 			if event.type == pygame.KEYDOWN:
-				if event.key == pygame.K_UP or event.key == pygame.K_SPACE and not self.game_over:
-					self.hop()
-					if not self.first_input_recieved:
-						self.first_input_recieved = True
-				elif event.key == pygame.K_r and self.game_over:
+				if event.key == pygame.K_UP or event.key == pygame.K_SPACE:
+					if not self.game_over:
+						self.hop()
+						if not self.first_input_recieved:
+							self.first_input_recieved = True
+				elif (event.key == pygame.K_r and self.game_over) or event.key == pygame.K_ESCAPE:
 					high_score_tracker = shelve.open('high_score.txt')
 					if self.high_score > high_score_tracker['high_score']:
 						high_score_tracker['high_score'] = self.high_score
 					high_score_tracker.close()
-					self.__init__()
+					if event.key == pygame.K_r:
+						self.__init__()
+					else:
+						return False
+				elif event.key == pygame.K_F3:
+					self.show_fps = not self.show_fps
 		
-		return False
+		return True
 		
 	def run_logic(self):
 		self.pipe_timer += 1
 		self.cloud_timer += 1
-		horizontal_hit = False
 		
 		if self.pipe_timer >= 60 and self.first_input_recieved:
 			self.pipe_timer = 0
@@ -145,10 +155,8 @@ class Game(object):
 		
 		if self.player_y < 0:
 			self.player_y = 0
-		elif self.player_y > SCREEN_HEIGHT - 30:
+		elif self.player_y > self.screen_height - 30:
 			self.game_over = True
-		
-		
 		
 		if not self.game_over:
 			self.all_sprites_list.update()
@@ -167,7 +175,7 @@ class Game(object):
 			if not self.game_over:
 				self.hit_sound.play()
 			self.game_over = True
-			horizontal_hit = True
+			self.player_x = pipe.rect.left - 47
 		
 		self.bird.moveTo(self.player_x, self.player_y)
 		
@@ -176,20 +184,33 @@ class Game(object):
 			if not self.game_over:
 				self.hit_sound.play()
 			self.game_over = True
-			if self.player_velo_y > 0 and isinstance(pipe, pipe_sprites.Bottom_pipe) and not horizontal_hit:
+			if not self.game_over:
+				self.hit_sound.play()
+			self.game_over = True
+			if self.player_velo_y > 0 and isinstance(pipe, pipe_sprites.Bottom_pipe):
 				self.bird.rect.bottom = pipe.rect.top
-			elif self.player_velo_y < 0 and isinstance(pipe, pipe_sprites.Top_pipe) and not horizontal_hit: 
+				self.player_y = self.bird.rect.top
+				self.bird.moveTo(self.player_x, self.player_y)
+			elif self.player_velo_y < 0 and isinstance(pipe, pipe_sprites.Top_pipe): 
 				self.bird.rect.top = pipe.rect.bottom
 				self.player_velo_y = 0
+				self.player_y = self.bird.rect.top
+				self.bird.moveTo(self.player_x, self.player_y)
 		
-		if not self.first_input_recieved and self.player_y > (SCREEN_HEIGHT / 2) + 30:
+		if not self.first_input_recieved and self.player_y > (self.screen_height / 2) + 30:
 			self.hop()
 			
 		if self.score > self.high_score:
 			self.high_score = self.score
 		
+	def set_start_time(self, time):
+		self.start_time = time
+	
+	def set_fps(self, frames):
+		self.fps = frames
+	
 	def display_frame(self, screen):
-		screen.blit(self.background_image, [0, 0])
+		pygame.draw.rect(screen, SKY, pygame.Rect(0, 0, self.screen_width, self.screen_height))
 		
 		self.clouds_list.draw(screen)
 		self.all_sprites_list.draw(screen)
@@ -201,16 +222,20 @@ class Game(object):
 		if not self.first_input_recieved:
 			font = pygame.font.SysFont("Calibri", 30, True, False)
 			text = font.render("press space to hop", True, WHITE)
-			center_x = (SCREEN_WIDTH // 2) - (text.get_width() // 2)
+			center_x = (self.screen_width // 2) - (text.get_width() // 2)
 			y = 500
 			screen.blit(render("press space to hop", font), [center_x, y])
 		
 		if self.game_over:
 			font = pygame.font.SysFont("Calibri", 40, True, False)
 			text = font.render("Game Over, press r to restart", True, WHITE)
-			center_x = (SCREEN_WIDTH // 2) - (text.get_width() // 2)
-			center_y = (SCREEN_HEIGHT // 2) - (text.get_height() // 2)
+			center_x = (self.screen_width // 2) - (text.get_width() // 2)
+			center_y = (self.screen_height // 2) - (text.get_height() // 2)
 			screen.blit(render("Game Over, press r to restart", font), [center_x, center_y])
+			
+		if self.show_fps:
+				font = pygame.font.SysFont("Calibri", 25, True, False)
+				screen.blit(render(('FPS: ' + str(self.fps)), font), [self.screen_width - 100, 10])
 		
 		pygame.display.flip()
 		
@@ -219,29 +244,44 @@ def main():
 	pygame.mixer.init()
 	pygame.init()
 	
-	size = [SCREEN_WIDTH, SCREEN_HEIGHT]
-	screen = pygame.display.set_mode(size)
+	#ctypes.windll.user32.SetProcessDPIAware()
+	#true_res = (ctypes.windll.user32.GetSystemMetrics(0), ctypes.windll.user32.GetSystemMetrics(1))
+	#screen = pygame.display.set_mode(true_res,pygame.FULLSCREEN)
+	screen = pygame.display.set_mode((1280, 720), pygame.FULLSCREEN)
+	screen_width, screen_height = pygame.display.get_surface().get_size()
+	
 	icon = pygame.image.load("resources/icon.png")
 	icon.set_colorkey(WHITE)
 	
 	pygame.display.set_icon(icon)
 	pygame.display.set_caption("Stupid Idiot Bird Can't Fly")
 	
-	background = pygame.image.load("resources/sky.png").convert()
+	title_image = pygame.image.load("resources/title.png").convert()
+	title_image.set_colorkey(WHITE)
+	title_x = screen_width // 2 - 217
+	title_y = screen_height // 5
+	
 	play_button_image = pygame.image.load("resources/play_button.png").convert()
 	play_button_image.set_colorkey(WHITE)
 	play_button_hover_image = pygame.image.load("resources/play_button_hover.png").convert()
 	play_button_hover_image.set_colorkey(WHITE)
 	
-	button_x_1 = SCREEN_WIDTH // 2 - 141
-	button_x_2 = SCREEN_WIDTH // 2 + 140
-	button_y_1 = 400
-	button_y_2 = 533
+	play_button_x_1 = screen_width // 5 #- 141
+	play_button_x_2 = screen_width // 5 + 281
+	play_button_y_1 = title_y + 350
+	play_button_y_2 = play_button_y_1 + 133
 	
-	title_image = pygame.image.load("resources/title.png").convert()
-	title_image.set_colorkey(WHITE)
-	title_x = SCREEN_WIDTH // 2 - 217
-	title_y = 50
+	quit_button_image = pygame.image.load("resources/quit_button.png").convert()
+	quit_button_image.set_colorkey(WHITE)
+	quit_button_hover_image = pygame.image.load("resources/quit_button_hover.png").convert()
+	quit_button_hover_image.set_colorkey(WHITE)
+	
+	quit_button_x_1 = (3 * (screen_width // 5)) #- 141
+	quit_button_x_2 = (3 * (screen_width // 5)) + 281
+	quit_button_y_1 = title_y + 350
+	quit_button_y_2 = quit_button_y_1 + 133
+	
+	click_sound = pygame.mixer.Sound("resources/click.ogg")
 	
 	done = False
 	clock = pygame.time.Clock()
@@ -249,40 +289,71 @@ def main():
 	game = Game()
 	
 	intro = True
-	
-	while intro:
-		for event in pygame.event.get():
-			if event.type == pygame.QUIT:
-				intro = False
-				done = True
-			elif event.type == pygame.MOUSEBUTTONDOWN:
-				if event.button == 1:
-					if event.pos[0] in range(button_x_1, button_x_2) and event.pos[1] in range(button_y_1, button_y_2):
-						intro = False
-		
-		mouse = pygame.mouse.get_pos()
-		
-		screen.blit(background, [0, 0])
-		
-		screen.blit(title_image, [title_x, title_y])
-		
-		if mouse[0] in range(button_x_1, button_x_2) and mouse[1] in range(button_y_1, button_y_2):
-			screen.blit(play_button_hover_image, [button_x_1, button_y_1])
-		else:
-			screen.blit(play_button_image, [button_x_1, button_y_1])
-		
-		pygame.display.flip()
-	
-	pygame.mouse.set_visible(False)
+	playing = True
 	
 	while not done:
-		done = game.process_events()
+		pygame.mouse.set_visible(True)
+		while intro:
+			for event in pygame.event.get():
+				if event.type == pygame.QUIT:
+					intro = False
+					playing = False
+					done = True
+				elif event.type == pygame.MOUSEBUTTONDOWN:
+					if event.button == 1:
+						if event.pos[0] in range(play_button_x_1, play_button_x_2) and event.pos[1] in range(play_button_y_1, play_button_y_2):
+							click_sound.play()
+							intro = False
+							playing = True
+						if event.pos[0] in range(quit_button_x_1, quit_button_x_2) and event.pos[1] in range(quit_button_y_1, quit_button_y_2):
+							click_sound.play()
+							intro = False
+							playing = False
+							done = True
+				elif event.type == pygame.KEYDOWN:
+					if event.key == pygame.K_ESCAPE:
+						intro = False
+						playing = False
+						done = True
+						
+						
+			mouse = pygame.mouse.get_pos()
+			
+			pygame.draw.rect(screen, SKY, pygame.Rect(0, 0, screen_width, screen_height))
+			
+			screen.blit(title_image, [title_x, title_y])
+			
+			if mouse[0] in range(play_button_x_1, play_button_x_2) and mouse[1] in range(play_button_y_1, play_button_y_2):
+				screen.blit(play_button_hover_image, [play_button_x_1, play_button_y_1])
+			else:
+				screen.blit(play_button_image, [play_button_x_1, play_button_y_1])
+				
+			if mouse[0] in range(quit_button_x_1, quit_button_x_2) and mouse[1] in range(quit_button_y_1, quit_button_y_2):
+				screen.blit(quit_button_hover_image, [quit_button_x_1, quit_button_y_1])
+			else:
+				screen.blit(quit_button_image, [quit_button_x_1, quit_button_y_1])
+			
+			pygame.display.flip()
 		
-		game.run_logic()
+		intro = True
+		pygame.mouse.set_visible(False)
 		
-		game.display_frame(screen)
+		start_time = 0
 		
-		clock.tick(60)
+		while playing:
+			if game.show_fps:
+				game.set_start_time(time.time())
+				
+			playing = game.process_events()
+			
+			game.run_logic()
+			
+			game.display_frame(screen)
+			
+			clock.tick(60)
+			
+			if game.show_fps:
+				game.set_fps(math.floor(1.0 / (time.time() - game.start_time)))
 	
 	pygame.quit()
 	

@@ -21,8 +21,10 @@ class Cloud(pygame.sprite.Sprite):
 			self.image = pygame.image.load("resources/cloud_" + str(num) + ".png").convert()
 		self.image.set_colorkey(GREEN)
 		self.rect = self.image.get_rect()
-		self.rect.x = 1152
-		self.rect.y = random.randint(50, 598)
+		
+		SCREEN_WIDTH, SCREEN_HEIGHT = pygame.display.get_surface().get_size()
+		self.rect.x = SCREEN_WIDTH + 1
+		self.rect.y = random.randint(50, SCREEN_HEIGHT - 50 - self.image.get_height())
 		
 	def update(self):
 		self.rect.x -= 3
