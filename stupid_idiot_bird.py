@@ -1,6 +1,6 @@
 import os
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
-#import ctypes
+import ctypes
 import pygame
 import stupid_bird_sprite
 import pipe_sprites
@@ -244,11 +244,11 @@ def main():
 	pygame.mixer.init()
 	pygame.init()
 	
-	#ctypes.windll.user32.SetProcessDPIAware()
-	#true_res = (ctypes.windll.user32.GetSystemMetrics(0), ctypes.windll.user32.GetSystemMetrics(1))
-	#screen = pygame.display.set_mode(true_res,pygame.FULLSCREEN)
-	screen = pygame.display.set_mode((1280, 720), pygame.FULLSCREEN)
-	screen_width, screen_height = pygame.display.get_surface().get_size()
+	ctypes.windll.user32.SetProcessDPIAware()
+	true_res = (ctypes.windll.user32.GetSystemMetrics(0), ctypes.windll.user32.GetSystemMetrics(1))
+	screen = pygame.display.set_mode(true_res,pygame.FULLSCREEN)
+	#screen = pygame.display.set_mode((1280, 720), pygame.FULLSCREEN)
+	#screen_width, screen_height = pygame.display.get_surface().get_size()
 	
 	icon = pygame.image.load("resources/icon.png")
 	icon.set_colorkey(WHITE)
@@ -266,7 +266,7 @@ def main():
 	play_button_hover_image = pygame.image.load("resources/play_button_hover.png").convert()
 	play_button_hover_image.set_colorkey(WHITE)
 	
-	play_button_x_1 = screen_width // 5 #- 141
+	play_button_x_1 = screen_width // 5
 	play_button_x_2 = screen_width // 5 + 281
 	play_button_y_1 = title_y + 350
 	play_button_y_2 = play_button_y_1 + 133
