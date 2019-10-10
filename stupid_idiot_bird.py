@@ -14,6 +14,10 @@ WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
 GREEN = (0, 255, 0)
 SKY = (0, 204, 255)
+TITLE_WIDTH = 433
+TITLE_HEIGHT = 251
+BUTTON_WIDTH = 281
+BUTTON_HEIGHT = 133
 
 _circle_cache = {}
 def _circlepoints(r):
@@ -68,6 +72,8 @@ class Game(object):
 		self.show_fps = False
 		self.fps = 0
 		self.screen_width, self.screen_height = pygame.display.get_surface().get_size()
+		self.h_scale = self.screen_width / 1280
+		self.v_scale = self.screen_height / 720
 		
 		self.gravity = 15
 		self.player_x = self.screen_width / 5
@@ -95,7 +101,7 @@ class Game(object):
 		high_score_tracker.close()
 		
 	def hop(self):
-		self.player_velo_y = -15
+		self.player_velo_y = int(-15 * self.v_scale)
 		self.hop_sound.play()
 		
 	def process_events(self):
@@ -150,12 +156,12 @@ class Game(object):
 			
 		self.player_y += self.player_velo_y
 		
-		if self.player_velo_y < self.gravity:
-			self.player_velo_y += 1
+		if self.player_velo_y < int(self.gravity * self.v_scale):
+			self.player_velo_y += math.ceil(self.v_scale)
 		
 		if self.player_y < 0:
 			self.player_y = 0
-		elif self.player_y > self.screen_height - 30:
+		elif self.player_y > self.screen_height + int(30 * self.v_scale):
 			self.game_over = True
 		
 		if not self.game_over:
@@ -169,13 +175,13 @@ class Game(object):
 		for zone in score_hit_list:
 			self.score += 1
 			if self.score % 10 == 0 and self.pipe_gap > 145:
-				self.pipe_gap -= 10
+				self.pipe_gap -= 3
 		
 		for pipe in pipe_hit_list:
 			if not self.game_over:
 				self.hit_sound.play()
 			self.game_over = True
-			self.player_x = pipe.rect.left - 47
+			self.player_x = pipe.rect.left - int(47 * self.h_scale)
 		
 		self.bird.moveTo(self.player_x, self.player_y)
 		
@@ -223,7 +229,7 @@ class Game(object):
 			font = pygame.font.SysFont("Calibri", 30, True, False)
 			text = font.render("press space to hop", True, WHITE)
 			center_x = (self.screen_width // 2) - (text.get_width() // 2)
-			y = 500
+			y = 500 * self.v_scale
 			screen.blit(render("press space to hop", font), [center_x, y])
 		
 		if self.game_over:
@@ -248,7 +254,10 @@ def main():
 	true_res = (ctypes.windll.user32.GetSystemMetrics(0), ctypes.windll.user32.GetSystemMetrics(1))
 	screen = pygame.display.set_mode(true_res,pygame.FULLSCREEN)
 	#screen = pygame.display.set_mode((1280, 720), pygame.FULLSCREEN)
-	#screen_width, screen_height = pygame.display.get_surface().get_size()
+	screen_width, screen_height = pygame.display.get_surface().get_size()
+	
+	horizontal_scale = screen_width / 1280
+	vertical_scale = screen_height / 720
 	
 	icon = pygame.image.load("resources/icon.png")
 	icon.set_colorkey(WHITE)
@@ -257,36 +266,39 @@ def main():
 	pygame.display.set_caption("Stupid Idiot Bird Can't Fly")
 	
 	title_image = pygame.image.load("resources/title.png").convert()
+	title_image = pygame.transform.scale(title_image, (int(TITLE_WIDTH * horizontal_scale), int(TITLE_HEIGHT * vertical_scale)))
 	title_image.set_colorkey(WHITE)
-	title_x = screen_width // 2 - 217
+	title_x = screen_width // 2 - int(TITLE_WIDTH * horizontal_scale / 2)
 	title_y = screen_height // 5
 	
 	play_button_image = pygame.image.load("resources/play_button.png").convert()
+	play_button_image = pygame.transform.scale(play_button_image, (int(BUTTON_WIDTH * horizontal_scale), int(BUTTON_HEIGHT * vertical_scale)))
 	play_button_image.set_colorkey(WHITE)
 	play_button_hover_image = pygame.image.load("resources/play_button_hover.png").convert()
+	play_button_hover_image = pygame.transform.scale(play_button_hover_image, (int(BUTTON_WIDTH * horizontal_scale), int(BUTTON_HEIGHT * vertical_scale)))
 	play_button_hover_image.set_colorkey(WHITE)
 	
-	play_button_x_1 = screen_width // 5
-	play_button_x_2 = screen_width // 5 + 281
-	play_button_y_1 = title_y + 350
-	play_button_y_2 = play_button_y_1 + 133
+	play_button_x_1 = (screen_width) // 5
+	play_button_x_2 = (screen_width) // 5 + int(BUTTON_WIDTH * horizontal_scale)
+	play_button_y_1 = title_y + int(350 * vertical_scale)
+	play_button_y_2 = play_button_y_1 + int(BUTTON_HEIGHT * vertical_scale)
 	
 	quit_button_image = pygame.image.load("resources/quit_button.png").convert()
+	quit_button_image = pygame.transform.scale(quit_button_image, (int(BUTTON_WIDTH * horizontal_scale), int(BUTTON_HEIGHT * vertical_scale)))
 	quit_button_image.set_colorkey(WHITE)
 	quit_button_hover_image = pygame.image.load("resources/quit_button_hover.png").convert()
+	quit_button_hover_image = pygame.transform.scale(quit_button_hover_image, (int(BUTTON_WIDTH * horizontal_scale), int(BUTTON_HEIGHT * vertical_scale)))
 	quit_button_hover_image.set_colorkey(WHITE)
 	
-	quit_button_x_1 = (3 * (screen_width // 5)) #- 141
-	quit_button_x_2 = (3 * (screen_width // 5)) + 281
-	quit_button_y_1 = title_y + 350
-	quit_button_y_2 = quit_button_y_1 + 133
+	quit_button_x_1 = (3 * ((screen_width) // 5)) #- 141
+	quit_button_x_2 = (3 * ((screen_width) // 5)) + int(BUTTON_WIDTH * horizontal_scale)
+	quit_button_y_1 = title_y + int(350 * vertical_scale)
+	quit_button_y_2 = quit_button_y_1 + int(BUTTON_HEIGHT * vertical_scale)
 	
 	click_sound = pygame.mixer.Sound("resources/click.ogg")
 	
 	done = False
 	clock = pygame.time.Clock()
-	
-	game = Game()
 	
 	intro = True
 	playing = True
@@ -339,6 +351,8 @@ def main():
 		pygame.mouse.set_visible(False)
 		
 		start_time = 0
+		
+		game = Game()
 		
 		while playing:
 			if game.show_fps:
