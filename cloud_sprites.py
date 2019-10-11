@@ -11,13 +11,12 @@ CLOUD_HEIGHT = 50
 class Cloud(pygame.sprite.Sprite):
 	""" Represents a cloud """
 	
-	def __init__(self):
+	def __init__(self, horiz_scale = 1.0, verti_scale = 1.0, SCREEN_WIDTH = 1280, SCREEN_HEIGHT = 720):
 		super().__init__()
 		num = random.randint(1, NUMBER_OF_CLOUDS)
 		
-		SCREEN_WIDTH, SCREEN_HEIGHT = pygame.display.get_surface().get_size()
-		self.h_scale = SCREEN_WIDTH / 1280
-		self.v_scale = SCREEN_HEIGHT / 720
+		self.h_scale = horiz_scale
+		self.v_scale = verti_scale
         
         #my girlfriend made me do this
         #he's whipped -the girlfriend 

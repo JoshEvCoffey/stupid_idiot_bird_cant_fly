@@ -13,12 +13,8 @@ class Bird(pygame.sprite.Sprite):
 	Derived from Sprite class in pygame
 	"""
 
-	def __init__(self):
+	def __init__(self, h_scale = 1.0, v_scale = 1.0):
 		super().__init__()
-
-		SCREEN_WIDTH, SCREEN_HEIGHT = pygame.display.get_surface().get_size()
-		h_scale = SCREEN_WIDTH / 1280
-		v_scale = SCREEN_HEIGHT / 720
 		
 		self.image = pygame.image.load("resources/stupid_bird.png").convert()
 		self.image = pygame.transform.scale(self.image, (int(BIRD_WIDTH * h_scale), int(BIRD_HEIGHT * h_scale)))

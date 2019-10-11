@@ -61,7 +61,7 @@ def render(text, font, gfcolor=WHITE, ocolor=BLACK, opx=2):
 class Game(object):
 	""" Represents an instance of the game """
 	
-	def __init__(self):
+	def __init__(self, horiz_scale = 1.0, verti_scale = 1.0, s_width = 1280, s_height = 720):
 		self.score = 0
 		self.pipe_timer = 30
 		self.pipe_gap = 225
@@ -71,13 +71,14 @@ class Game(object):
 		self.first_input_recieved = False
 		self.show_fps = False
 		self.fps = 0
-		self.screen_width, self.screen_height = pygame.display.get_surface().get_size()
-		self.h_scale = self.screen_width / 1280
-		self.v_scale = self.screen_height / 720
+		self.screen_width = s_width
+		self.screen_height = s_height
+		self.h_scale = horiz_scale
+		self.v_scale = verti_scale
 		
 		self.gravity = 15
 		self.player_x = int(self.screen_width / 5)
-		self.player_y = int(self.screen_height / 2)
+		self.player_y = 360
 		self.player_velo_y = 0
 		
 		self.hop_sound = pygame.mixer.Sound("resources/hop.ogg")
@@ -88,7 +89,7 @@ class Game(object):
 		self.scorezone_list = pygame.sprite.Group()
 		self.all_sprites_list = pygame.sprite.Group()
 		
-		self.bird = stupid_bird_sprite.Bird()
+		self.bird = stupid_bird_sprite.Bird(self.h_scale, self.v_scale)
 		self.bird.moveTo(self.player_x, self.player_y)
 		self.all_sprites_list.add(self.bird)
 		
@@ -124,7 +125,7 @@ class Game(object):
 						high_score_tracker['high_score'] = self.high_score
 					high_score_tracker.close()
 					if event.key == pygame.K_r:
-						self.__init__()
+						self.__init__(self.h_scale, self.v_scale, self.screen_width, self.screen_height)
 					else:
 						return False
 				elif event.key == pygame.K_F3:
@@ -138,9 +139,9 @@ class Game(object):
 		
 		if self.pipe_timer >= 60 and self.first_input_recieved:
 			self.pipe_timer = 0
-			bottom_pipe = pipe_sprites.Bottom_pipe(self.pipe_gap)
-			between_pipe = pipe_sprites.Between_pipe(bottom_pipe, self.pipe_gap)
-			top_pipe = pipe_sprites.Top_pipe(bottom_pipe, self.pipe_gap)
+			bottom_pipe = pipe_sprites.Bottom_pipe(self.pipe_gap, self.h_scale, self.v_scale, self.screen_width, self.screen_height)
+			between_pipe = pipe_sprites.Between_pipe(bottom_pipe, self.pipe_gap, self.h_scale, self.v_scale)
+			top_pipe = pipe_sprites.Top_pipe(bottom_pipe, self.pipe_gap, self.h_scale, self.v_scale)
 			
 			self.all_sprites_list.add(bottom_pipe)
 			self.all_sprites_list.add(top_pipe)
@@ -150,7 +151,7 @@ class Game(object):
 		
 		if self.cloud_timer >= 55:
 			self.cloud_timer = 0
-			cloud = cloud_sprites.Cloud()
+			cloud = cloud_sprites.Cloud(self.h_scale, self.v_scale, self.screen_width, self.screen_height)
 			
 			self.clouds_list.add(cloud)
 			
@@ -201,7 +202,7 @@ class Game(object):
 				self.bird.rect.top = pipe.rect.bottom
 				self.player_velo_y = 0
 				self.player_y = self.bird.rect.top
-				self.bird.moveTo(self.player_x, self.player_y)
+				self.bird.moveTo(self.player_x, int(self.player_y * self.v_scale))
 		
 		if not self.first_input_recieved and int(self.player_y * self.v_scale) > (self.screen_height / 2) + 30:
 			self.hop()
@@ -352,7 +353,7 @@ def main():
 		
 		start_time = 0
 		
-		game = Game()
+		game = Game(horizontal_scale, vertical_scale, screen_width, screen_height)
 		
 		while playing:
 			if game.show_fps:

@@ -14,12 +14,11 @@ class Top_pipe(pygame.sprite.Sprite):
 	Derived from Sprite class in pygame
 	"""
 
-	def __init__(self, bottom_pipe, scorezone_height = 200):
+	def __init__(self, bottom_pipe, scorezone_height = 200, horiz_scale = 1.0, verti_scale = 1.0):
 		super().__init__()
 		
-		SCREEN_WIDTH, SCREEN_HEIGHT = pygame.display.get_surface().get_size()
-		self.h_scale = SCREEN_WIDTH / 1280
-		self.v_scale = SCREEN_HEIGHT / 720
+		self.h_scale = horiz_scale
+		self.v_scale = verti_scale
 
 		self.image = pygame.image.load("resources/top_pipe.png").convert()
 		self.image = pygame.transform.scale(self.image, (int(PIPE_WIDTH * self.h_scale), int(PIPE_HEIGHT * self.v_scale)))
@@ -39,12 +38,11 @@ class Bottom_pipe(pygame.sprite.Sprite):
 	Derived from Sprite class in pygame
 	"""
 
-	def __init__(self, scorezone_height = 200):
+	def __init__(self, scorezone_height = 200, horiz_scale = 1.0, verti_scale = 1.0, SCREEN_WIDTH = 1280, SCREEN_HEIGHT = 720):
 		super().__init__()
 		
-		SCREEN_WIDTH, SCREEN_HEIGHT = pygame.display.get_surface().get_size()
-		self.h_scale = SCREEN_WIDTH / 1280
-		self.v_scale = SCREEN_HEIGHT / 720
+		self.h_scale = horiz_scale
+		self.v_scale = verti_scale
 
 		self.image = pygame.image.load("resources/bottom_pipe.png").convert()
 		self.image = pygame.transform.scale(self.image, (int(PIPE_WIDTH * self.h_scale), int(PIPE_HEIGHT * self.v_scale)))
@@ -62,12 +60,11 @@ class Bottom_pipe(pygame.sprite.Sprite):
 
 class Between_pipe(pygame.sprite.DirtySprite):
 
-	def __init__(self, bottom_pipe, scorezone_height = 200):
+	def __init__(self, bottom_pipe, scorezone_height = 200, horiz_scale = 1.0, verti_scale = 1.0):
 		super().__init__()
 
-		SCREEN_WIDTH, SCREEN_HEIGHT = pygame.display.get_surface().get_size()
-		self.h_scale = SCREEN_WIDTH / 1280
-		self.v_scale = SCREEN_HEIGHT / 720
+		self.h_scale = horiz_scale
+		self.v_scale = verti_scale
 		
 		self.image = pygame.Surface([PIPE_WIDTH * self.h_scale, scorezone_height * self.v_scale])
 		self.rect = self.image.get_rect()
