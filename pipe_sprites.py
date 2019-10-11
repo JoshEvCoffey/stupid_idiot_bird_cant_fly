@@ -5,8 +5,8 @@ import random
 import math
 
 WHITE = (255,255,255)
-PIPE_HEIGHT = 860
-PIPE_WIDTH = 75
+PIPE_HEIGHT = 860.0
+PIPE_WIDTH = 75.0
 
 class Top_pipe(pygame.sprite.Sprite):
 	"""
@@ -29,7 +29,7 @@ class Top_pipe(pygame.sprite.Sprite):
 		self.rect.y = bottom_pipe.rect.y - ((PIPE_HEIGHT + scorezone_height) * self.v_scale)
 
 	def update(self):
-		self.rect.x -= int(5 * self.v_scale)
+		self.rect.x -= int(5 * self.h_scale)
 		if self.rect.right <= 0:
 			self.kill()
 
@@ -53,7 +53,7 @@ class Bottom_pipe(pygame.sprite.Sprite):
 		
 		MAGIC_HEIGHT_NUM = math.ceil((SCREEN_HEIGHT - (600 * self.v_scale)) / 2)
 		self.rect.x = SCREEN_WIDTH + 1
-		self.rect.y = random.randint(scorezone_height * self.v_scale + MAGIC_HEIGHT_NUM, SCREEN_HEIGHT - MAGIC_HEIGHT_NUM)
+		self.rect.y = random.randint(math.ceil(scorezone_height * self.v_scale + MAGIC_HEIGHT_NUM), math.ceil(SCREEN_HEIGHT - MAGIC_HEIGHT_NUM))
 
 	def update(self):
 		self.rect.x -= int(5 * self.h_scale)

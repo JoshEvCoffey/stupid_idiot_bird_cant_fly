@@ -76,8 +76,8 @@ class Game(object):
 		self.v_scale = self.screen_height / 720
 		
 		self.gravity = 15
-		self.player_x = self.screen_width / 5
-		self.player_y = self.screen_height / 2
+		self.player_x = int(self.screen_width / 5)
+		self.player_y = int(self.screen_height / 2)
 		self.player_velo_y = 0
 		
 		self.hop_sound = pygame.mixer.Sound("resources/hop.ogg")
@@ -101,7 +101,7 @@ class Game(object):
 		high_score_tracker.close()
 		
 	def hop(self):
-		self.player_velo_y = int(-15 * self.v_scale)
+		self.player_velo_y = -15.0
 		self.hop_sound.play()
 		
 	def process_events(self):
@@ -156,8 +156,8 @@ class Game(object):
 			
 		self.player_y += self.player_velo_y
 		
-		if self.player_velo_y < int(self.gravity * self.v_scale):
-			self.player_velo_y += math.ceil(self.v_scale)
+		if self.player_velo_y < self.gravity:
+			self.player_velo_y += 1
 		
 		if self.player_y < 0:
 			self.player_y = 0
@@ -183,7 +183,7 @@ class Game(object):
 			self.game_over = True
 			self.player_x = pipe.rect.left - int(47 * self.h_scale)
 		
-		self.bird.moveTo(self.player_x, self.player_y)
+		self.bird.moveTo(self.player_x, int(self.player_y * self.v_scale))
 		
 		pipe_hit_list = pygame.sprite.spritecollide(self.bird, self.pipes_list, False)
 		for pipe in pipe_hit_list:
@@ -203,7 +203,7 @@ class Game(object):
 				self.player_y = self.bird.rect.top
 				self.bird.moveTo(self.player_x, self.player_y)
 		
-		if not self.first_input_recieved and self.player_y > (self.screen_height / 2) + 30:
+		if not self.first_input_recieved and int(self.player_y * self.v_scale) > (self.screen_height / 2) + 30:
 			self.hop()
 			
 		if self.score > self.high_score:
