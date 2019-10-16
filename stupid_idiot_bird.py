@@ -162,7 +162,7 @@ class Game(object):
 		
 		if self.player_y < 0:
 			self.player_y = 0
-		elif self.player_y > self.screen_height + int(30 * self.v_scale):
+		elif int(self.player_y * self.v_scale) > self.screen_height:
 			self.game_over = True
 		
 		if not self.game_over:
@@ -191,17 +191,13 @@ class Game(object):
 			if not self.game_over:
 				self.hit_sound.play()
 			self.game_over = True
-			if not self.game_over:
-				self.hit_sound.play()
-			self.game_over = True
 			if self.player_velo_y > 0 and isinstance(pipe, pipe_sprites.Bottom_pipe):
-				self.bird.rect.bottom = pipe.rect.top
-				self.player_y = self.bird.rect.top
-				self.bird.moveTo(self.player_x, self.player_y)
-			elif self.player_velo_y < 0 and isinstance(pipe, pipe_sprites.Top_pipe): 
-				self.bird.rect.top = pipe.rect.bottom
 				self.player_velo_y = 0
-				self.player_y = self.bird.rect.top
+				self.player_y = int(pipe.rect.top / self.v_scale) - 30
+				self.bird.moveTo(self.player_x, int(self.player_y * self.v_scale))
+			elif self.player_velo_y < 0 and isinstance(pipe, pipe_sprites.Top_pipe):
+				self.player_velo_y = 0
+				self.player_y = int(pipe.rect.bottom / self.v_scale) + 1
 				self.bird.moveTo(self.player_x, int(self.player_y * self.v_scale))
 		
 		if not self.first_input_recieved and int(self.player_y * self.v_scale) > (self.screen_height / 2) + 30:
