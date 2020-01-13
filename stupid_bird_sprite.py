@@ -16,9 +16,8 @@ class Bird(pygame.sprite.Sprite):
 	def __init__(self, h_scale = 1.0, v_scale = 1.0):
 		super().__init__()
 		
-		self.image = pygame.image.load("resources/stupid_bird.png").convert()
+		self.image = pygame.image.load("resources/stupid_bird.png").convert_alpha()
 		self.image = pygame.transform.scale(self.image, (int(BIRD_WIDTH * h_scale), int(BIRD_HEIGHT * h_scale)))
-		self.image.set_colorkey(WHITE)
 		self.rect = self.image.get_rect()
 
 	def moveTo(self, x, y):

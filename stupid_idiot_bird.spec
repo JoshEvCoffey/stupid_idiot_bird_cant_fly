@@ -30,4 +30,4 @@ exe = EXE(pyz,
           upx=True,
           upx_exclude=[],
           runtime_tmpdir=None,
-          console=False , icon='C:\\Users\\jcoff\\Workspace\\python\\stupid_idiot_bird_cant_fly\\icon.ico')
+          console=False , icon='icon.ico')

@@ -3,6 +3,7 @@ os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
 import pygame
 import random
 import math
+import ctypes
 
 WHITE = (255,255,255)
 PIPE_HEIGHT = 860.0
@@ -14,18 +15,15 @@ class Top_pipe(pygame.sprite.Sprite):
 	Derived from Sprite class in pygame
 	"""
 
-	def __init__(self, bottom_pipe, scorezone_height = 200, horiz_scale = 1.0, verti_scale = 1.0):
+	def __init__(self, bottom_pipe, image, scorezone_height = 200, h_scale = 1, v_scale = 1):
 		super().__init__()
-		
-		self.h_scale = horiz_scale
-		self.v_scale = verti_scale
 
-		self.image = pygame.image.load("resources/top_pipe.png").convert()
-		self.image = pygame.transform.scale(self.image, (int(PIPE_WIDTH * self.h_scale), int(PIPE_HEIGHT * self.v_scale)))
-		self.image.set_colorkey(WHITE)
+		self.h_scale = h_scale
+		
+		self.image = image
 		self.rect = self.image.get_rect()
 		self.rect.x = bottom_pipe.rect.x
-		self.rect.y = bottom_pipe.rect.y - ((PIPE_HEIGHT + scorezone_height) * self.v_scale)
+		self.rect.y = bottom_pipe.rect.y - ((PIPE_HEIGHT + scorezone_height) * v_scale)
 
 	def update(self):
 		self.rect.x -= int(5 * self.h_scale)
@@ -38,15 +36,13 @@ class Bottom_pipe(pygame.sprite.Sprite):
 	Derived from Sprite class in pygame
 	"""
 
-	def __init__(self, scorezone_height = 200, horiz_scale = 1.0, verti_scale = 1.0, SCREEN_WIDTH = 1280, SCREEN_HEIGHT = 720):
+	def __init__(self, image, scorezone_height = 200, horiz_scale = 1.0, verti_scale = 1.0, SCREEN_WIDTH = 1280, SCREEN_HEIGHT = 720):
 		super().__init__()
 		
 		self.h_scale = horiz_scale
 		self.v_scale = verti_scale
 
-		self.image = pygame.image.load("resources/bottom_pipe.png").convert()
-		self.image = pygame.transform.scale(self.image, (int(PIPE_WIDTH * self.h_scale), int(PIPE_HEIGHT * self.v_scale)))
-		self.image.set_colorkey(WHITE)
+		self.image = image
 		self.rect = self.image.get_rect()
 		
 		MAGIC_HEIGHT_NUM = math.ceil((SCREEN_HEIGHT - (600 * self.v_scale)) / 2)

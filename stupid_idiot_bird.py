@@ -2,12 +2,13 @@ import os
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
 import ctypes
 import pygame
-import stupid_bird_sprite
-import pipe_sprites
-import cloud_sprites
 import shelve
 import time
 import math
+import random
+import stupid_bird_sprite
+import pipe_sprites
+import cloud_sprites
 
 # Constants
 WHITE = (255, 255, 255)
@@ -18,6 +19,11 @@ TITLE_WIDTH = 433
 TITLE_HEIGHT = 251
 BUTTON_WIDTH = 281
 BUTTON_HEIGHT = 133
+PIPE_HEIGHT = 860.0
+PIPE_WIDTH = 75.0
+NUMBER_OF_CLOUDS = 6
+CLOUD_WIDTH = 101
+CLOUD_HEIGHT = 50
 
 _circle_cache = {}
 def _circlepoints(r):
@@ -63,6 +69,7 @@ class Game(object):
 	
 	def __init__(self, horiz_scale = 1.0, verti_scale = 1.0, s_width = 1280, s_height = 720):
 		self.score = 0
+		self.blockFrames = 15
 		self.pipe_timer = 30
 		self.pipe_gap = 225
 		self.cloud_timer = 50
@@ -75,6 +82,22 @@ class Game(object):
 		self.screen_height = s_height
 		self.h_scale = horiz_scale
 		self.v_scale = verti_scale
+		self.TOP_PIPE_IMAGE = pygame.image.load("resources/top_pipe.png").convert_alpha()
+		self.TOP_PIPE_IMAGE = pygame.transform.scale(self.TOP_PIPE_IMAGE, (int(PIPE_WIDTH * horiz_scale), int(PIPE_HEIGHT * verti_scale)))
+		self.BOTTOM_PIPE_IMAGE = pygame.image.load("resources/bottom_pipe.png").convert_alpha()
+		self.BOTTOM_PIPE_IMAGE = pygame.transform.scale(self.BOTTOM_PIPE_IMAGE, (int(PIPE_WIDTH * horiz_scale), int(PIPE_HEIGHT * verti_scale)))
+		self.CLOUD_1_IMAGE = pygame.image.load("resources/cloud_1.png").convert_alpha()
+		self.CLOUD_1_IMAGE = pygame.transform.scale(self.CLOUD_1_IMAGE, (int(CLOUD_WIDTH * self.h_scale), int(CLOUD_HEIGHT * self.v_scale)))
+		self.CLOUD_2_IMAGE = pygame.image.load("resources/cloud_2.png").convert_alpha()
+		self.CLOUD_2_IMAGE = pygame.transform.scale(self.CLOUD_2_IMAGE, (int(CLOUD_WIDTH * self.h_scale), int(CLOUD_HEIGHT * self.v_scale)))
+		self.CLOUD_3_IMAGE = pygame.image.load("resources/cloud_3.png").convert_alpha()
+		self.CLOUD_3_IMAGE = pygame.transform.scale(self.CLOUD_3_IMAGE, (int(CLOUD_WIDTH * self.h_scale), int(CLOUD_HEIGHT * self.v_scale)))
+		self.CLOUD_4_IMAGE = pygame.image.load("resources/cloud_4.png").convert_alpha()
+		self.CLOUD_4_IMAGE = pygame.transform.scale(self.CLOUD_4_IMAGE, (int(CLOUD_WIDTH * self.h_scale), int(CLOUD_HEIGHT * self.v_scale)))
+		self.CLOUD_5_IMAGE = pygame.image.load("resources/cloud_5.png").convert_alpha()
+		self.CLOUD_5_IMAGE = pygame.transform.scale(self.CLOUD_5_IMAGE, (int(CLOUD_WIDTH * self.h_scale), int(CLOUD_HEIGHT * self.v_scale)))
+		self.BEST_CLOUD_IMAGE = pygame.image.load("resources/thebestcloud.png").convert_alpha()
+		self.BEST_CLOUD_IMAGE = pygame.transform.scale(self.BEST_CLOUD_IMAGE, (int(CLOUD_WIDTH * self.h_scale), int(CLOUD_HEIGHT * self.v_scale)))
 		
 		self.gravity = 15
 		self.player_x = int(self.screen_width / 5)
@@ -106,6 +129,8 @@ class Game(object):
 		self.hop_sound.play()
 		
 	def process_events(self):
+		if self.game_over:
+			self.blockFrames-=1
 		for event in pygame.event.get():
 			if event.type == pygame.QUIT:
 				high_score_tracker = shelve.open('high_score.txt')
@@ -114,17 +139,16 @@ class Game(object):
 				high_score_tracker.close()
 				return False
 			if event.type == pygame.KEYDOWN:
-				if event.key == pygame.K_UP or event.key == pygame.K_SPACE:
-					if not self.game_over:
-						self.hop()
-						if not self.first_input_recieved:
-							self.first_input_recieved = True
-				elif (event.key == pygame.K_r and self.game_over) or event.key == pygame.K_ESCAPE:
+				if (event.key == pygame.K_UP or event.key == pygame.K_SPACE) and not self.game_over:
+					self.hop()
+					if not self.first_input_recieved:
+						self.first_input_recieved = True
+				elif ((event.key == pygame.K_r or (event.key == pygame.K_SPACE and self.blockFrames <= 0)) and self.game_over) or event.key == pygame.K_ESCAPE:
 					high_score_tracker = shelve.open('high_score.txt')
 					if self.high_score > high_score_tracker['high_score']:
 						high_score_tracker['high_score'] = self.high_score
 					high_score_tracker.close()
-					if event.key == pygame.K_r:
+					if event.key == pygame.K_r or event.key == pygame.K_SPACE:
 						self.__init__(self.h_scale, self.v_scale, self.screen_width, self.screen_height)
 					else:
 						return False
@@ -139,9 +163,9 @@ class Game(object):
 		
 		if self.pipe_timer >= 60 and self.first_input_recieved:
 			self.pipe_timer = 0
-			bottom_pipe = pipe_sprites.Bottom_pipe(self.pipe_gap, self.h_scale, self.v_scale, self.screen_width, self.screen_height)
+			bottom_pipe = pipe_sprites.Bottom_pipe(self.BOTTOM_PIPE_IMAGE, self.pipe_gap, self.h_scale, self.v_scale, self.screen_width, self.screen_height)
 			between_pipe = pipe_sprites.Between_pipe(bottom_pipe, self.pipe_gap, self.h_scale, self.v_scale)
-			top_pipe = pipe_sprites.Top_pipe(bottom_pipe, self.pipe_gap, self.h_scale, self.v_scale)
+			top_pipe = pipe_sprites.Top_pipe(bottom_pipe, self.TOP_PIPE_IMAGE, self.pipe_gap, self.h_scale, self.v_scale)
 			
 			self.all_sprites_list.add(bottom_pipe)
 			self.all_sprites_list.add(top_pipe)
@@ -151,7 +175,21 @@ class Game(object):
 		
 		if self.cloud_timer >= 55:
 			self.cloud_timer = 0
-			cloud = cloud_sprites.Cloud(self.h_scale, self.v_scale, self.screen_width, self.screen_height)
+			num = random.randint(1, NUMBER_OF_CLOUDS)
+			if num == 1:
+				cloud_image = self.CLOUD_1_IMAGE
+			elif num == 2:
+				cloud_image = self.CLOUD_2_IMAGE
+			elif num == 3:
+				cloud_image = self.CLOUD_3_IMAGE
+			elif num == 4:
+				cloud_image = self.CLOUD_4_IMAGE
+			elif num == 5:
+				cloud_image = self.CLOUD_5_IMAGE
+			elif num == 6:
+				cloud_image = self.BEST_CLOUD_IMAGE
+				
+			cloud = cloud_sprites.Cloud(cloud_image, self.h_scale, self.screen_width, self.screen_height)
 			
 			self.clouds_list.add(cloud)
 			
@@ -231,10 +269,10 @@ class Game(object):
 		
 		if self.game_over:
 			font = pygame.font.SysFont("Calibri", 40, True, False)
-			text = font.render("Game Over, press r to restart", True, WHITE)
+			text = font.render("Game Over, press r or SPACE to restart", True, WHITE)
 			center_x = (self.screen_width // 2) - (text.get_width() // 2)
 			center_y = (self.screen_height // 2) - (text.get_height() // 2)
-			screen.blit(render("Game Over, press r to restart", font), [center_x, center_y])
+			screen.blit(render("Game Over, press r or SPACE to restart", font), [center_x, center_y])
 			
 		if self.show_fps:
 				font = pygame.font.SysFont("Calibri", 25, True, False)
