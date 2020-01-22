@@ -21,9 +21,13 @@ BUTTON_WIDTH = 281
 BUTTON_HEIGHT = 133
 PIPE_HEIGHT = 860.0
 PIPE_WIDTH = 75.0
+BIRD_WIDTH = 47.0
+BIRD_HEIGHT = 30.0
 NUMBER_OF_CLOUDS = 6
 CLOUD_WIDTH = 101
 CLOUD_HEIGHT = 50
+ADDED_ROT_ANGLE = 5
+HOPPING_ANGLE = 80
 
 _circle_cache = {}
 def _circlepoints(r):
@@ -78,6 +82,7 @@ class Game(object):
 		self.first_input_recieved = False
 		self.show_fps = False
 		self.fps = 0
+		self.paused = False
 		self.screen_width = s_width
 		self.screen_height = s_height
 		self.h_scale = horiz_scale
@@ -103,6 +108,9 @@ class Game(object):
 		self.player_x = int(self.screen_width / 5)
 		self.player_y = 360
 		self.player_velo_y = 0
+		self.player_rot_angle = 0
+		self.player_on_ground = False
+		self.player_between_pipes = False
 		
 		self.hop_sound = pygame.mixer.Sound("resources/hop.ogg")
 		self.hit_sound = pygame.mixer.Sound("resources/hit.ogg")
@@ -126,6 +134,8 @@ class Game(object):
 		
 	def hop(self):
 		self.player_velo_y = -15.0
+		self.bird.rot_center(HOPPING_ANGLE - self.player_rot_angle)
+		self.player_rot_angle = HOPPING_ANGLE
 		self.hop_sound.play()
 		
 	def process_events(self):
@@ -140,7 +150,8 @@ class Game(object):
 				return False
 			if event.type == pygame.KEYDOWN:
 				if (event.key == pygame.K_UP or event.key == pygame.K_SPACE) and not self.game_over:
-					self.hop()
+					if not self.paused:
+						self.hop()
 					if not self.first_input_recieved:
 						self.first_input_recieved = True
 				elif ((event.key == pygame.K_r or (event.key == pygame.K_SPACE and self.blockFrames <= 0)) and self.game_over) or event.key == pygame.K_ESCAPE:
@@ -154,95 +165,142 @@ class Game(object):
 						return False
 				elif event.key == pygame.K_F3:
 					self.show_fps = not self.show_fps
+				elif event.key == pygame.K_p:
+					self.paused = not self.paused
 		
 		return True
 		
 	def run_logic(self):
-		self.pipe_timer += 1
-		self.cloud_timer += 1
-		
-		if self.pipe_timer >= 60 and self.first_input_recieved:
-			self.pipe_timer = 0
-			bottom_pipe = pipe_sprites.Bottom_pipe(self.BOTTOM_PIPE_IMAGE, self.pipe_gap, self.h_scale, self.v_scale, self.screen_width, self.screen_height)
-			between_pipe = pipe_sprites.Between_pipe(bottom_pipe, self.pipe_gap, self.h_scale, self.v_scale)
-			top_pipe = pipe_sprites.Top_pipe(bottom_pipe, self.TOP_PIPE_IMAGE, self.pipe_gap, self.h_scale, self.v_scale)
+		if not self.paused:
+			self.pipe_timer += 1
+			self.cloud_timer += 1
 			
-			self.all_sprites_list.add(bottom_pipe)
-			self.all_sprites_list.add(top_pipe)
-			self.pipes_list.add(bottom_pipe)
-			self.pipes_list.add(top_pipe)
-			self.scorezone_list.add(between_pipe)
-		
-		if self.cloud_timer >= 55:
-			self.cloud_timer = 0
-			num = random.randint(1, NUMBER_OF_CLOUDS)
-			if num == 1:
-				cloud_image = self.CLOUD_1_IMAGE
-			elif num == 2:
-				cloud_image = self.CLOUD_2_IMAGE
-			elif num == 3:
-				cloud_image = self.CLOUD_3_IMAGE
-			elif num == 4:
-				cloud_image = self.CLOUD_4_IMAGE
-			elif num == 5:
-				cloud_image = self.CLOUD_5_IMAGE
-			elif num == 6:
-				cloud_image = self.BEST_CLOUD_IMAGE
+			if self.pipe_timer >= 60 and self.first_input_recieved:
+				self.pipe_timer = 0
+				bottom_pipe = pipe_sprites.Bottom_pipe(self.BOTTOM_PIPE_IMAGE, self.pipe_gap, self.h_scale, self.v_scale, self.screen_width, self.screen_height)
+				between_pipe = pipe_sprites.Between_pipe(bottom_pipe, self.pipe_gap, self.h_scale, self.v_scale)
+				top_pipe = pipe_sprites.Top_pipe(bottom_pipe, self.TOP_PIPE_IMAGE, self.pipe_gap, self.h_scale, self.v_scale)
 				
-			cloud = cloud_sprites.Cloud(cloud_image, self.h_scale, self.screen_width, self.screen_height)
+				self.all_sprites_list.add(bottom_pipe)
+				self.all_sprites_list.add(top_pipe)
+				self.pipes_list.add(bottom_pipe)
+				self.pipes_list.add(top_pipe)
+				self.scorezone_list.add(between_pipe)
 			
-			self.clouds_list.add(cloud)
+			if self.cloud_timer >= 55:
+				self.cloud_timer = 0
+				num = random.randint(1, NUMBER_OF_CLOUDS)
+				if num == 1:
+					cloud_image = self.CLOUD_1_IMAGE
+				elif num == 2:
+					cloud_image = self.CLOUD_2_IMAGE
+				elif num == 3:
+					cloud_image = self.CLOUD_3_IMAGE
+				elif num == 4:
+					cloud_image = self.CLOUD_4_IMAGE
+				elif num == 5:
+					cloud_image = self.CLOUD_5_IMAGE
+				elif num == 6:
+					cloud_image = self.BEST_CLOUD_IMAGE
+					
+				cloud = cloud_sprites.Cloud(cloud_image, self.h_scale, self.screen_width, self.screen_height)
+				
+				self.clouds_list.add(cloud)
+				
+			self.player_y += self.player_velo_y
 			
-		self.player_y += self.player_velo_y
-		
-		if self.player_velo_y < self.gravity:
-			self.player_velo_y += 1
-		
-		if self.player_y < 0:
-			self.player_y = 0
-		elif int(self.player_y * self.v_scale) > self.screen_height:
-			self.game_over = True
-		
-		if not self.game_over:
-			self.all_sprites_list.update()
-			self.clouds_list.update()
-			self.scorezone_list.update()
-		
-		score_hit_list = pygame.sprite.spritecollide(self.bird, self.scorezone_list, True)
-		pipe_hit_list = pygame.sprite.spritecollide(self.bird, self.pipes_list, False)
-		
-		for zone in score_hit_list:
-			self.score += 1
-			if self.score % 10 == 0 and self.pipe_gap > 145:
-				self.pipe_gap -= 3
-		
-		for pipe in pipe_hit_list:
+			if self.player_velo_y < self.gravity and not self.player_on_ground:
+				self.player_velo_y += 1
+				self.bird.rot_center(-ADDED_ROT_ANGLE)
+				self.player_rot_angle -= ADDED_ROT_ANGLE % 360
+			
+			
+			if self.player_y < 0:
+				self.player_y = 0
+			elif int(self.player_y * self.v_scale) > self.screen_height:
+				self.game_over = True
+			
 			if not self.game_over:
-				self.hit_sound.play()
-			self.game_over = True
-			self.player_x = pipe.rect.left - int(47 * self.h_scale)
-		
-		self.bird.moveTo(self.player_x, int(self.player_y * self.v_scale))
-		
-		pipe_hit_list = pygame.sprite.spritecollide(self.bird, self.pipes_list, False)
-		for pipe in pipe_hit_list:
-			if not self.game_over:
-				self.hit_sound.play()
-			self.game_over = True
-			if self.player_velo_y > 0 and isinstance(pipe, pipe_sprites.Bottom_pipe):
-				self.player_velo_y = 0
-				self.player_y = int(pipe.rect.top / self.v_scale) - 30
-				self.bird.moveTo(self.player_x, int(self.player_y * self.v_scale))
-			elif self.player_velo_y < 0 and isinstance(pipe, pipe_sprites.Top_pipe):
-				self.player_velo_y = 0
-				self.player_y = int(pipe.rect.bottom / self.v_scale) + 1
-				self.bird.moveTo(self.player_x, int(self.player_y * self.v_scale))
-		
-		if not self.first_input_recieved and int(self.player_y * self.v_scale) > (self.screen_height / 2) + 30:
-			self.hop()
+				self.all_sprites_list.update()
+				self.clouds_list.update()
+				self.scorezone_list.update()
 			
-		if self.score > self.high_score:
-			self.high_score = self.score
+			score_hit_list = pygame.sprite.spritecollide(self.bird, self.scorezone_list, True)
+			#pipe_hit_list = pygame.sprite.spritecollide(self.bird, self.pipes_list, False)
+			
+			for zone in score_hit_list:
+				self.score += 1
+				if self.score % 10 == 0 and self.pipe_gap > 145:
+					self.pipe_gap -= 3
+			
+			#for pipe in pipe_hit_list:
+			#	if not self.game_over:
+			#		self.hit_sound.play()
+			#	if not self.player_on_ground:
+			#		pipe_pos = int(pipe.rect.left/self.h_scale)
+			#		pos_horiz_offset = (math.cos(math.radians(self.player_rot_angle)) * (.5 * BIRD_WIDTH)) - (math.sin(math.radians(self.player_rot_angle)) * (.5 * BIRD_HEIGHT))
+			#		neg_horiz_offset = (math.cos(math.radians(self.player_rot_angle)) * (.5 * BIRD_WIDTH)) - (math.sin(math.radians(self.player_rot_angle)) * (.5 * (-1 * BIRD_HEIGHT)))
+			#		
+			#		if pos_horiz_offset > neg_horiz_offset:
+			#			self.player_x = pipe_pos - pos_horiz_offset
+			#		
+			#		else:
+			#			self.player_x = pipe_pos - neg_horiz_offset
+			#		
+			#	self.game_over = True
+			
+			#self.bird.moveTo(int(self.player_x * self.h_scale), int(self.player_y * self.v_scale))
+			self.player_on_ground = False
+			
+			pipe_hit_list = pygame.sprite.spritecollide(self.bird, self.pipes_list, False)
+			for pipe in pipe_hit_list:
+				pipe_x_pos = pipe.rect.left/self.h_scale
+				pipe_y_pos = 0
+				
+				if isinstance(pipe, pipe_sprites.Top_Pipe)
+					pipe_y_pos = pipe.rect.bottom/self.v_scale
+				else
+					pipe_y_pos = pipe.rect.top/self.v_scale
+				
+				player_between_pipes = False
+				
+				#TODO: check if player is between pipes
+				
+				if not self.game_over:
+					self.hit_sound.play()
+				if self.player_velo_y > 0 and isinstance(pipe, pipe_sprites.Bottom_pipe) and self.player_y <= int(pipe.rect.top/ self.v_scale) - 14:
+					self.player_velo_y = 0
+					self.player_y = int(pipe.rect.top/ self.v_scale) - 14
+					self.player_x += 2
+					self.bird.rot_center(-ADDED_ROT_ANGLE)
+					self.player_rot_angle -= ADDED_ROT_ANGLE % 360
+					self.player_on_ground = True
+					self.game_over = True 
+				elif self.player_velo_y < 0 and isinstance(pipe, pipe_sprites.Top_pipe) and self.player_y >= int((pipe.rect.bottom + (.5 * BIRD_HEIGHT)) / self.v_scale) + 1:
+					self.player_velo_y = 0
+					self.player_y = int((pipe.rect.bottom + (.5 * BIRD_HEIGHT)) / self.v_scale) + 1
+					self.game_over = True 
+				elif not self.game_over and not self.player_on_ground:
+					pipe_x_pos = int(pipe.rect.left/self.h_scale)
+					pos_horiz_offset = (math.cos(math.radians(self.player_rot_angle)) * (.5 * BIRD_WIDTH)) - (math.sin(math.radians(self.player_rot_angle)) * (.5 * BIRD_HEIGHT))
+					neg_horiz_offset = (math.cos(math.radians(self.player_rot_angle)) * (.5 * BIRD_WIDTH)) - (math.sin(math.radians(self.player_rot_angle)) * (.5 * (-1 * BIRD_HEIGHT)))
+					if pos_horiz_offset > neg_horiz_offset:
+						self.player_x = pipe_x_pos - pos_horiz_offset
+					else:
+						self.player_x = pipe_x_pos - neg_horiz_offset 
+					self.game_over = True 
+				
+			self.bird.moveTo(int(self.player_x * self.h_scale), int(self.player_y * self.v_scale))
+			
+			if self.game_over:
+				for pipe in self.pipes_list:
+					pipe.setMoving(False)
+			
+			if not self.first_input_recieved and int(self.player_y * self.v_scale) > (self.screen_height / 2) + (.5 * BIRD_HEIGHT):
+				self.hop()
+				
+			if self.score > self.high_score:
+				self.high_score = self.score
 		
 	def set_start_time(self, time):
 		self.start_time = time
@@ -276,7 +334,8 @@ class Game(object):
 			
 		if self.show_fps:
 				font = pygame.font.SysFont("Calibri", 25, True, False)
-				screen.blit(render(('FPS: ' + str(self.fps)), font), [self.screen_width - 100, 10])
+				screen.blit(render(('FPS: ' + str(self.fps)), font), [self.screen_width - 150, 10])
+				screen.blit(render(('pyAngle: ' + str(self.player_rot_angle)), font), [self.screen_width - 150, 50])
 		
 		pygame.display.flip()
 		
