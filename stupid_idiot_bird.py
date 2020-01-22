@@ -112,6 +112,8 @@ class Game(object):
 		self.player_on_ground = False
 		self.player_between_pipes = False
 		
+		self.has_hit_pipe = False
+		
 		self.hop_sound = pygame.mixer.Sound("resources/hop.ogg")
 		self.hit_sound = pygame.mixer.Sound("resources/hit.ogg")
 		
@@ -257,30 +259,42 @@ class Game(object):
 				pipe_x_pos = pipe.rect.left/self.h_scale
 				pipe_y_pos = 0
 				
-				if isinstance(pipe, pipe_sprites.Top_Pipe)
+				if isinstance(pipe, pipe_sprites.Top_pipe):
 					pipe_y_pos = pipe.rect.bottom/self.v_scale
-				else
+				else:
 					pipe_y_pos = pipe.rect.top/self.v_scale
 				
 				player_between_pipes = False
 				
-				#TODO: check if player is between pipes
+				if isinstance(pipe, pipe_sprites.Top_pipe) and self.player_y >= pipe_y_pos and self.player_y <= pipe_y_pos + self.pipe_gap and self.player_x >= pipe_x_pos:
+					player_between_pipes = True
+				if isinstance(pipe, pipe_sprites.Bottom_pipe) and self.player_y <= pipe_y_pos and self.player_y >= pipe_y_pos - self.pipe_gap and self.player_x >= pipe_x_pos:
+					player_between_pipes = True
+				
+				if(not self.has_hit_pipe):
+					print('FIRST:')
+					self.has_hit_pipe = True
+				print('Player pos: ' + str(self.player_x) + ', ' + str(self.player_y))
+				if isinstance(pipe, pipe_sprites.Top_pipe):
+					print('Between pipe zone: ' + str(pipe_x_pos) +', '+ str(pipe_y_pos) +', '+ str(pipe_y_pos + self.pipe_gap))
+				if isinstance(pipe, pipe_sprites.Bottom_pipe):
+					print('Between pipe zone: ' + str(pipe_x_pos) +', '+ str(pipe_y_pos) +', '+ str(pipe_y_pos - self.pipe_gap))
+				print('')
 				
 				if not self.game_over:
 					self.hit_sound.play()
-				if self.player_velo_y > 0 and isinstance(pipe, pipe_sprites.Bottom_pipe) and self.player_y <= int(pipe.rect.top/ self.v_scale) - 14:
+					self.game_over = True
+				if self.player_velo_y > 0 and isinstance(pipe, pipe_sprites.Bottom_pipe):
 					self.player_velo_y = 0
 					self.player_y = int(pipe.rect.top/ self.v_scale) - 14
 					self.player_x += 2
 					self.bird.rot_center(-ADDED_ROT_ANGLE)
 					self.player_rot_angle -= ADDED_ROT_ANGLE % 360
 					self.player_on_ground = True
-					self.game_over = True 
-				elif self.player_velo_y < 0 and isinstance(pipe, pipe_sprites.Top_pipe) and self.player_y >= int((pipe.rect.bottom + (.5 * BIRD_HEIGHT)) / self.v_scale) + 1:
+				elif self.player_velo_y < 0 and isinstance(pipe, pipe_sprites.Top_pipe) and player_between_pipes:
 					self.player_velo_y = 0
 					self.player_y = int((pipe.rect.bottom + (.5 * BIRD_HEIGHT)) / self.v_scale) + 1
-					self.game_over = True 
-				elif not self.game_over and not self.player_on_ground:
+				elif not self.player_on_ground and not player_between_pipes:
 					pipe_x_pos = int(pipe.rect.left/self.h_scale)
 					pos_horiz_offset = (math.cos(math.radians(self.player_rot_angle)) * (.5 * BIRD_WIDTH)) - (math.sin(math.radians(self.player_rot_angle)) * (.5 * BIRD_HEIGHT))
 					neg_horiz_offset = (math.cos(math.radians(self.player_rot_angle)) * (.5 * BIRD_WIDTH)) - (math.sin(math.radians(self.player_rot_angle)) * (.5 * (-1 * BIRD_HEIGHT)))
@@ -288,7 +302,7 @@ class Game(object):
 						self.player_x = pipe_x_pos - pos_horiz_offset
 					else:
 						self.player_x = pipe_x_pos - neg_horiz_offset 
-					self.game_over = True 
+					
 				
 			self.bird.moveTo(int(self.player_x * self.h_scale), int(self.player_y * self.v_scale))
 			
