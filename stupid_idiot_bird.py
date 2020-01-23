@@ -71,7 +71,7 @@ def render(text, font, gfcolor=WHITE, ocolor=BLACK, opx=2):
 class Game(object):
 	""" Represents an instance of the game """
 	
-	def __init__(self, horiz_scale = 1.0, verti_scale = 1.0, s_width = 1280, s_height = 720):
+	def __init__(self, horiz_scale = 1.0, verti_scale = 1.0, s_width = 1280, s_height = 720, show_fps = False):
 		self.score = 0
 		self.blockFrames = 15
 		self.pipe_timer = 30
@@ -80,7 +80,7 @@ class Game(object):
 		self.start_time = time.time()
 		self.game_over = False
 		self.first_input_recieved = False
-		self.show_fps = False
+		self.show_fps = show_fps
 		self.fps = 0
 		self.paused = False
 		self.screen_width = s_width
@@ -162,7 +162,7 @@ class Game(object):
 						high_score_tracker['high_score'] = self.high_score
 					high_score_tracker.close()
 					if event.key == pygame.K_r or event.key == pygame.K_SPACE:
-						self.__init__(self.h_scale, self.v_scale, self.screen_width, self.screen_height)
+						self.__init__(self.h_scale, self.v_scale, self.screen_width, self.screen_height, self.show_fps)
 					else:
 						return False
 				elif event.key == pygame.K_F3:
@@ -271,22 +271,22 @@ class Game(object):
 				if isinstance(pipe, pipe_sprites.Bottom_pipe) and self.player_y <= pipe_y_pos and self.player_y >= pipe_y_pos - self.pipe_gap and self.player_x >= pipe_x_pos:
 					player_between_pipes = True
 				
-				if(not self.has_hit_pipe):
-					print('FIRST:')
-					self.has_hit_pipe = True
-				print('Player pos: ' + str(self.player_x) + ', ' + str(self.player_y))
-				if isinstance(pipe, pipe_sprites.Top_pipe):
-					print('Between pipe zone: ' + str(pipe_x_pos) +', '+ str(pipe_y_pos) +', '+ str(pipe_y_pos + self.pipe_gap))
-				if isinstance(pipe, pipe_sprites.Bottom_pipe):
-					print('Between pipe zone: ' + str(pipe_x_pos) +', '+ str(pipe_y_pos) +', '+ str(pipe_y_pos - self.pipe_gap))
-				print('')
+				#if(not self.has_hit_pipe):
+				#	print('FIRST:')
+				#	self.has_hit_pipe = True
+				#print('Player pos: ' + str(self.player_x) + ', ' + str(self.player_y))
+				#if isinstance(pipe, pipe_sprites.Top_pipe):
+				#	print('Between pipe zone: ' + str(pipe_x_pos) +', '+ str(pipe_y_pos) +', '+ str(pipe_y_pos + self.pipe_gap))
+				#if isinstance(pipe, pipe_sprites.Bottom_pipe):
+				#	print('Between pipe zone: ' + str(pipe_x_pos) +', '+ str(pipe_y_pos) +', '+ str(pipe_y_pos - self.pipe_gap))
+				#print('')
 				
 				if not self.game_over:
 					self.hit_sound.play()
 					self.game_over = True
 				if self.player_velo_y > 0 and isinstance(pipe, pipe_sprites.Bottom_pipe):
 					self.player_velo_y = 0
-					self.player_y = int(pipe.rect.top/ self.v_scale) - 14
+					self.player_y = int(pipe.rect.top/ self.v_scale) - 13
 					self.player_x += 2
 					self.bird.rot_center(-ADDED_ROT_ANGLE)
 					self.player_rot_angle -= ADDED_ROT_ANGLE % 360
@@ -463,8 +463,10 @@ def main():
 		game = Game(horizontal_scale, vertical_scale, screen_width, screen_height)
 		
 		while playing:
-			if game.show_fps:
+			update_fps = False
+			if game.show_fps and time.time() - game.start_time >= .25:
 				game.set_start_time(time.time())
+				update_fps = True
 				
 			playing = game.process_events()
 			
@@ -474,7 +476,7 @@ def main():
 			
 			clock.tick(60)
 			
-			if game.show_fps:
+			if game.show_fps and update_fps:
 				game.set_fps(math.floor(1.0 / (time.time() - game.start_time)))
 	
 	pygame.quit()
