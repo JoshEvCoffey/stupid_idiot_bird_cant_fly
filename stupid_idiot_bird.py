@@ -85,23 +85,32 @@ class Game(object):
 	def __init__(self, horiz_scale = 1.0, verti_scale = 1.0, s_width = 1280, s_height = 720, show_fps = False):
 		self.score = 0
 		self.blockFrames = 15
+		
 		self.pipe_timer = 30
 		self.pipe_gap = 225
+		
 		self.cloud_timer = 50
+		
 		self.start_time = time.time()
+		
 		self.game_over = False
 		self.first_input_recieved = False
-		self.show_fps = show_fps
-		self.fps = 0
 		self.paused = False
+		self.new_high_score = False
+		
+		self.show_fps = show_fps
+		self.fps = 60
+		
 		self.screen_width = s_width
 		self.screen_height = s_height
 		self.h_scale = horiz_scale
 		self.v_scale = verti_scale
+		
 		self.TOP_PIPE_IMAGE = pygame.image.load("resources/top_pipe.png").convert_alpha()
 		self.TOP_PIPE_IMAGE = pygame.transform.scale(self.TOP_PIPE_IMAGE, (int(PIPE_WIDTH * horiz_scale), int(PIPE_HEIGHT * verti_scale)))
 		self.BOTTOM_PIPE_IMAGE = pygame.image.load("resources/bottom_pipe.png").convert_alpha()
 		self.BOTTOM_PIPE_IMAGE = pygame.transform.scale(self.BOTTOM_PIPE_IMAGE, (int(PIPE_WIDTH * horiz_scale), int(PIPE_HEIGHT * verti_scale)))
+		
 		self.CLOUD_1_IMAGE = pygame.image.load("resources/cloud_1.png").convert_alpha()
 		self.CLOUD_1_IMAGE = pygame.transform.scale(self.CLOUD_1_IMAGE, (int(CLOUD_WIDTH * self.h_scale), int(CLOUD_HEIGHT * self.v_scale)))
 		self.CLOUD_2_IMAGE = pygame.image.load("resources/cloud_2.png").convert_alpha()
@@ -122,8 +131,6 @@ class Game(object):
 		self.player_rot_angle = 0
 		self.player_on_ground = False
 		self.player_between_pipes = False
-		
-		self.has_hit_pipe = False
 		
 		self.hop_sound = pygame.mixer.Sound("resources/hop.ogg")
 		self.hit_sound = pygame.mixer.Sound("resources/hit.ogg")
@@ -178,7 +185,7 @@ class Game(object):
 						return False
 				elif event.key == pygame.K_F3:
 					self.show_fps = not self.show_fps
-				elif event.key == pygame.K_p:
+				elif event.key == pygame.K_p and self.first_input_recieved and not self.game_over:
 					self.paused = not self.paused
 		
 		return True
@@ -239,32 +246,15 @@ class Game(object):
 				self.scorezone_list.update()
 			
 			score_hit_list = pygame.sprite.spritecollide(self.bird, self.scorezone_list, True, collided)
-			#pipe_hit_list = pygame.sprite.spritecollide(self.bird, self.pipes_list, False)
 			
 			for zone in score_hit_list:
-				self.score += 1
-				if self.score % 10 == 0 and self.pipe_gap > 145:
-					self.pipe_gap -= 5
-				elif self.score % 10 == 0 and self.pipe_gap > 60:
-					self.pipe_gap -= 1
+				if not self.game_over:
+					self.score += 1
+					if self.score % 10 == 0 and self.pipe_gap > 145:
+						self.pipe_gap -= 5
+					elif self.score % 10 == 0 and self.pipe_gap > 60:
+						self.pipe_gap -= 1
 			
-			#for pipe in pipe_hit_list:
-			#	if not self.game_over:
-			#		self.hit_sound.play()
-			#	if not self.player_on_ground:
-			#		pipe_pos = int(pipe.rect.left/self.h_scale)
-			#		pos_horiz_offset = (math.cos(math.radians(self.player_rot_angle)) * (.5 * BIRD_WIDTH)) - (math.sin(math.radians(self.player_rot_angle)) * (.5 * BIRD_HEIGHT))
-			#		neg_horiz_offset = (math.cos(math.radians(self.player_rot_angle)) * (.5 * BIRD_WIDTH)) - (math.sin(math.radians(self.player_rot_angle)) * (.5 * (-1 * BIRD_HEIGHT)))
-			#		
-			#		if pos_horiz_offset > neg_horiz_offset:
-			#			self.player_x = pipe_pos - pos_horiz_offset
-			#		
-			#		else:
-			#			self.player_x = pipe_pos - neg_horiz_offset
-			#		
-			#	self.game_over = True
-			
-			#self.bird.moveTo(int(self.player_x * self.h_scale), int(self.player_y * self.v_scale))
 			self.player_on_ground = False
 			
 			pipe_hit_list = pygame.sprite.spritecollide(self.bird, self.pipes_list, False, collided)
@@ -284,18 +274,6 @@ class Game(object):
 				if isinstance(pipe, pipe_sprites.Bottom_pipe) and self.player_y <= pipe_y_pos and self.player_y >= pipe_y_pos - self.pipe_gap + 100 and self.bird.hitbox.right >= pipe_x_pos:
 					player_between_pipes = True
 				
-				'''if(not self.has_hit_pipe):
-					print('FIRST:')
-					self.has_hit_pipe = True
-				print('Player pos: ' + str(self.player_x) + ', ' + str(self.player_y))
-				if isinstance(pipe, pipe_sprites.Top_pipe):
-					print('Between pipe zone: ' + str(pipe_x_pos) +', '+ str(pipe_y_pos) +', '+ str(pipe_y_pos + self.pipe_gap - 100))
-				if isinstance(pipe, pipe_sprites.Bottom_pipe):
-					print('Between pipe zone: ' + str(pipe_x_pos) +', '+ str(pipe_y_pos) +', '+ str(pipe_y_pos - self.pipe_gap + 100))
-					print('Pipe top: ' + str(pipe.hitbox.top/self.v_scale))
-				print('player_between_pipes: ' + str(player_between_pipes))
-				print('')'''
-				
 				if not self.game_over:
 					self.hit_sound.play()
 					self.game_over = True
@@ -310,7 +288,6 @@ class Game(object):
 					self.player_velo_y = 0
 					self.player_y = int((pipe.hitbox.bottom + (.5 * BIRD_HITBOX_HEIGHT)) / self.v_scale) + 1
 				elif not self.player_on_ground and not player_between_pipes:
-					#pipe_x_pos = int(pipe.hitbox.left/self.h_scale)
 					pos_horiz_offset = (math.cos(math.radians(self.player_rot_angle)) * (.5 * BIRD_HITBOX_WIDTH)) - (math.sin(math.radians(self.player_rot_angle)) * (.5 * BIRD_HITBOX_HEIGHT))
 					neg_horiz_offset = (math.cos(math.radians(self.player_rot_angle)) * (.5 * BIRD_HITBOX_WIDTH)) - (math.sin(math.radians(self.player_rot_angle)) * (.5 * (-1 * BIRD_HITBOX_HEIGHT)))
 					if pos_horiz_offset > neg_horiz_offset:
@@ -330,6 +307,7 @@ class Game(object):
 				
 			if self.score > self.high_score:
 				self.high_score = self.score
+				self.new_high_score = True
 		
 	def set_start_time(self, time):
 		self.start_time = time
@@ -342,24 +320,54 @@ class Game(object):
 		
 		self.clouds_list.draw(screen)
 		self.all_sprites_list.draw(screen)
-		font = pygame.font.SysFont("Calibri", 25, True, False)
-		screen.blit(render('Score: ' + str(self.score), font), [10, 10])
-		if not self.high_score == 0:
-			screen.blit(render('High Score: ' + str(self.high_score), font), [10, 40])
+		
+		if not self.game_over:
+			font = pygame.font.SysFont("Calibri", 25, True, False)
+			screen.blit(render('Score: ' + str(self.score), font), [10, 10])
+			if not self.high_score == 0:
+				screen.blit(render('High Score: ' + str(self.high_score), font), [10, 40])
 		
 		if not self.first_input_recieved:
 			font = pygame.font.SysFont("Calibri", 30, True, False)
-			text = font.render("press space to hop", True, WHITE)
+			text = font.render("press SPACE to hop", True, WHITE)
 			center_x = (self.screen_width // 2) - (text.get_width() // 2)
 			y = 500 * self.v_scale
-			screen.blit(render("press space to hop", font), [center_x, y])
+			screen.blit(render("press SPACE to hop", font), [center_x, y])
 		
 		if self.game_over:
 			font = pygame.font.SysFont("Calibri", 40, True, False)
-			text = font.render("Game Over, press r or SPACE to restart", True, WHITE)
+			text = font.render("press R or SPACE to restart", True, WHITE)
+			center_x = (self.screen_width // 2) - (text.get_width() // 2)
+			center_y = (self.screen_height // 2) + (text.get_height() * 2)
+			screen.blit(render("press R or SPACE to restart", font), [center_x, center_y])
+
+			text = font.render("HIGH SCORE: " + str(self.high_score), True, WHITE)
+			center_y -= text.get_height() * 3
+			center_x = (self.screen_width // 2) - (text.get_width() // 2)
+			screen.blit(render("HIGH SCORE: " + str(self.high_score), font), [center_x, center_y])
+			
+			text = font.render("SCORE: " + str(self.score), True, WHITE)
+			center_y -= text.get_height() * 1.5
+			center_x = (self.screen_width // 2) - (text.get_width() // 2)
+			screen.blit(render("SCORE: " + str(self.score), font), [center_x, center_y])
+			
+			if self.new_high_score:
+				text = font.render("NEW HIGH SCORE!", True, WHITE)
+				center_y -= text.get_height() * 1.5
+				center_x = (self.screen_width // 2) - (text.get_width() // 2)
+				screen.blit(render("NEW HIGH SCORE!", font), [center_x, center_y])
+			else:
+				text = font.render("GAME OVER", True, WHITE)
+				center_y -= text.get_height() * 1.5
+				center_x = (self.screen_width // 2) - (text.get_width() // 2)
+				screen.blit(render("GAME OVER", font), [center_x, center_y])		
+
+		if self.paused:
+			font = pygame.font.SysFont("Calibri", 40, True, False)
+			text = font.render("PAUSED", True, WHITE)
 			center_x = (self.screen_width // 2) - (text.get_width() // 2)
 			center_y = (self.screen_height // 2) - (text.get_height() // 2)
-			screen.blit(render("Game Over, press r or SPACE to restart", font), [center_x, center_y])
+			screen.blit(render("PAUSED", font), [center_x, center_y])
 			
 		if self.show_fps:
 				font = pygame.font.SysFont("Calibri", 25, True, False)
@@ -376,7 +384,6 @@ def main():
 	ctypes.windll.user32.SetProcessDPIAware()
 	true_res = (ctypes.windll.user32.GetSystemMetrics(0), ctypes.windll.user32.GetSystemMetrics(1))
 	screen = pygame.display.set_mode(true_res,pygame.FULLSCREEN)
-	#screen = pygame.display.set_mode((1280, 720), pygame.FULLSCREEN)
 	screen_width, screen_height = pygame.display.get_surface().get_size()
 	
 	horizontal_scale = screen_width / 1280
@@ -413,7 +420,7 @@ def main():
 	quit_button_hover_image = pygame.transform.scale(quit_button_hover_image, (int(BUTTON_WIDTH * horizontal_scale), int(BUTTON_HEIGHT * vertical_scale)))
 	quit_button_hover_image.set_colorkey(WHITE)
 	
-	quit_button_x_1 = (3 * ((screen_width) // 5)) #- 141
+	quit_button_x_1 = (3 * ((screen_width) // 5))
 	quit_button_x_2 = (3 * ((screen_width) // 5)) + int(BUTTON_WIDTH * horizontal_scale)
 	quit_button_y_1 = title_y + int(350 * vertical_scale)
 	quit_button_y_2 = quit_button_y_1 + int(BUTTON_HEIGHT * vertical_scale)

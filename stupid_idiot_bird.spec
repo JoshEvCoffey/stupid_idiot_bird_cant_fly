@@ -4,7 +4,7 @@ block_cipher = None
 
 
 a = Analysis(['stupid_idiot_bird.py'],
-             pathex=['E:\\stupid_idiot_bird_cant_fly'],
+             pathex=['C:\\Users\\jcoff\\Workspace\\python\\stupid_idiot_bird_cant_fly'],
              binaries=[],
              datas=[],
              hiddenimports=[],

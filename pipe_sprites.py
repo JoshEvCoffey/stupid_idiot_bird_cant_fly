@@ -80,12 +80,13 @@ class Between_pipe(pygame.sprite.DirtySprite):
 		self.rect = self.image.get_rect()
 		self.rect.x = bottom_pipe.rect.x
 		self.rect.y = bottom_pipe.rect.y - int(scorezone_height * self.v_scale)
-		self.hitbox = pygame.Rect(0,0,61*self.h_scale,PIPE_HEIGHT*self.v_scale)
-		self.hitbox.center = self.rect.center
+		self.hitbox = pygame.Rect(0,0, 8*self.h_scale, ((PIPE_HEIGHT * 2) + scorezone_height) * self.v_scale)
+		self.hitbox.centery = self.rect.centery
+		self.hitbox.left = self.rect.right + 25
 		self.visible = 0
 
 	def update(self):
 		self.rect.x -= int(5 * self.h_scale)
-		self.hitbox.center = self.rect.center
+		self.hitbox.left = self.rect.right + 25
 		if self.rect.right <= 0:
 			self.kill()
