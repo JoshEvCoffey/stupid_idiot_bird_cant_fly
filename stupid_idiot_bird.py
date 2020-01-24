@@ -300,6 +300,8 @@ class Game(object):
 					
 				
 			self.bird.moveTo(int(self.player_x * self.h_scale), int(self.player_y * self.v_scale))
+			if self.player_y * self.v_scale > self.screen_height + 50:
+				self.bird.kill()
 			
 			if self.game_over:
 				for pipe in self.pipes_list:
