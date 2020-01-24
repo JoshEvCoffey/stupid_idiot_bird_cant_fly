@@ -6,7 +6,7 @@ import math
 WHITE = (255,255,255)
 BIRD_WIDTH = 47.0
 BIRD_HEIGHT = 30.0
-BIRD_HITBOX_HEIGHT = 25.0
+BIRD_HITBOX_HEIGHT = 30.0
 BIRD_HITBOX_WIDTH = 25.0
 
 class Bird(pygame.sprite.Sprite):

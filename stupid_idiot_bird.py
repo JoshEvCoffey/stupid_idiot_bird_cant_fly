@@ -27,7 +27,7 @@ PIPE_WIDTH = 75.0
 
 BIRD_WIDTH = 47.0
 BIRD_HEIGHT = 30.0
-BIRD_HITBOX_HEIGHT = 25.0
+BIRD_HITBOX_HEIGHT = 30.0
 BIRD_HITBOX_WIDTH = 25.0
 
 NUMBER_OF_CLOUDS = 6
@@ -82,7 +82,7 @@ def collided(sprite, other):
 class Game(object):
 	""" Represents an instance of the game """
 	
-	def __init__(self, horiz_scale = 1.0, verti_scale = 1.0, s_width = 1280, s_height = 720, show_fps = False):
+	def __init__(self, horiz_scale = 1.0, verti_scale = 1.0, s_width = 1280, s_height = 720, show_fps = False, sound_on = True):
 		self.score = 0
 		self.blockFrames = 15
 		
@@ -97,6 +97,7 @@ class Game(object):
 		self.first_input_recieved = False
 		self.paused = False
 		self.new_high_score = False
+		self.sound_on = sound_on
 		
 		self.show_fps = show_fps
 		self.fps = 60
@@ -156,7 +157,8 @@ class Game(object):
 		self.player_velo_y = -15.0
 		self.bird.rot_center(HOPPING_ANGLE - self.player_rot_angle)
 		self.player_rot_angle = HOPPING_ANGLE
-		self.hop_sound.play()
+		if self.sound_on:
+			self.hop_sound.play()
 		
 	def process_events(self):
 		if self.game_over:
@@ -180,7 +182,7 @@ class Game(object):
 						high_score_tracker['high_score'] = self.high_score
 					high_score_tracker.close()
 					if event.key == pygame.K_r or event.key == pygame.K_SPACE:
-						self.__init__(self.h_scale, self.v_scale, self.screen_width, self.screen_height, self.show_fps)
+						self.__init__(self.h_scale, self.v_scale, self.screen_width, self.screen_height, self.show_fps, self.sound_on)
 					else:
 						return False
 				elif event.key == pygame.K_F3:
@@ -275,11 +277,12 @@ class Game(object):
 					player_between_pipes = True
 				
 				if not self.game_over:
-					self.hit_sound.play()
+					if self.sound_on:
+						self.hit_sound.play()
 					self.game_over = True
 				if self.player_velo_y > 0 and isinstance(pipe, pipe_sprites.Bottom_pipe) and player_between_pipes:
 					self.player_velo_y = 0
-					self.player_y = int(pipe.hitbox.top / self.v_scale) - ((BIRD_HITBOX_HEIGHT/2) - 1)
+					self.player_y = int(pipe.hitbox.top / self.v_scale) - ((((BIRD_HITBOX_HEIGHT + BIRD_HITBOX_WIDTH)/2)/2) - 1)
 					self.player_x += 2
 					self.bird.rot_center(-ADDED_ROT_ANGLE)
 					self.player_rot_angle -= ADDED_ROT_ANGLE % 360
@@ -336,9 +339,15 @@ class Game(object):
 		
 		if self.game_over:
 			font = pygame.font.SysFont("Calibri", 40, True, False)
+			
+			text = font.render("or press ESC to return to the Main Menu", True, WHITE)
+			center_y = (self.screen_height // 2) + (text.get_height() * 3.5)
+			center_x = (self.screen_width // 2) - (text.get_width() // 2)
+			screen.blit(render("or press ESC to return to the Main Menu", font), [center_x, center_y])
+			
 			text = font.render("press R or SPACE to restart", True, WHITE)
 			center_x = (self.screen_width // 2) - (text.get_width() // 2)
-			center_y = (self.screen_height // 2) + (text.get_height() * 2)
+			center_y -= (text.get_height() * 1.5)
 			screen.blit(render("press R or SPACE to restart", font), [center_x, center_y])
 
 			text = font.render("HIGH SCORE: " + str(self.high_score), True, WHITE)
@@ -425,10 +434,21 @@ def main():
 	quit_button_y_1 = title_y + int(350 * vertical_scale)
 	quit_button_y_2 = quit_button_y_1 + int(BUTTON_HEIGHT * vertical_scale)
 	
+	sound_on_image = pygame.image.load("resources/sound_on.png").convert_alpha()
+	sound_on_image = pygame.transform.scale(sound_on_image, (int(13 * horizontal_scale), int(11 * vertical_scale)))
+	sound_off_image = pygame.image.load("resources/sound_off.png").convert_alpha()
+	sound_off_image = pygame.transform.scale(sound_off_image, (int(13 * horizontal_scale), int(11 * vertical_scale)))
+	sound_button_x1 = 10
+	sound_button_x2 = 10 + (int(13 * horizontal_scale))
+	sound_button_y1 = screen_height - (20 + int(11 * vertical_scale))
+	sound_button_y2 = screen_height - 20
+	
 	click_sound = pygame.mixer.Sound("resources/click.ogg")
 	
 	done = False
 	clock = pygame.time.Clock()
+	
+	sound_on = True
 	
 	intro = True
 	playing = True
@@ -444,14 +464,20 @@ def main():
 				elif event.type == pygame.MOUSEBUTTONDOWN:
 					if event.button == 1:
 						if event.pos[0] in range(play_button_x_1, play_button_x_2) and event.pos[1] in range(play_button_y_1, play_button_y_2):
-							click_sound.play()
+							if sound_on:
+								click_sound.play()
 							intro = False
 							playing = True
 						if event.pos[0] in range(quit_button_x_1, quit_button_x_2) and event.pos[1] in range(quit_button_y_1, quit_button_y_2):
-							click_sound.play()
+							if sound_on:
+								click_sound.play()
 							intro = False
 							playing = False
 							done = True
+						if event.pos[0] in range(sound_button_x1, sound_button_x2) and event.pos[1] in range(sound_button_y1, sound_button_y2):
+							sound_on = not sound_on
+							if sound_on:
+								click_sound.play()
 				elif event.type == pygame.KEYDOWN:
 					if event.key == pygame.K_ESCAPE:
 						intro = False
@@ -475,6 +501,11 @@ def main():
 			else:
 				screen.blit(quit_button_image, [quit_button_x_1, quit_button_y_1])
 			
+			if sound_on:
+				screen.blit(sound_on_image, [sound_button_x1, sound_button_y1])
+			else:
+				screen.blit(sound_off_image, [sound_button_x1, sound_button_y1])
+				
 			pygame.display.flip()
 		
 		intro = True
@@ -482,7 +513,7 @@ def main():
 		
 		start_time = 0
 		
-		game = Game(horizontal_scale, vertical_scale, screen_width, screen_height)
+		game = Game(horizontal_scale, vertical_scale, screen_width, screen_height, False, sound_on)
 		
 		while playing:
 			update_fps = False
