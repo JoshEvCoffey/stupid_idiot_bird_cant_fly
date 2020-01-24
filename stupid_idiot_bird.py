@@ -15,19 +15,27 @@ WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
 GREEN = (0, 255, 0)
 SKY = (0, 204, 255)
+
 TITLE_WIDTH = 433
 TITLE_HEIGHT = 251
+
 BUTTON_WIDTH = 281
 BUTTON_HEIGHT = 133
+
 PIPE_HEIGHT = 860.0
 PIPE_WIDTH = 75.0
+
 BIRD_WIDTH = 47.0
 BIRD_HEIGHT = 30.0
+BIRD_HITBOX_HEIGHT = 25.0
+BIRD_HITBOX_WIDTH = 25.0
+
 NUMBER_OF_CLOUDS = 6
 CLOUD_WIDTH = 101
 CLOUD_HEIGHT = 50
-ADDED_ROT_ANGLE = 5
-HOPPING_ANGLE = 80
+
+ADDED_ROT_ANGLE = 3
+HOPPING_ANGLE = 45
 
 _circle_cache = {}
 def _circlepoints(r):
@@ -67,6 +75,9 @@ def render(text, font, gfcolor=WHITE, ocolor=BLACK, opx=2):
 
     surf.blit(textsurface, (opx, opx))
     return surf
+
+def collided(sprite, other):
+	return sprite.hitbox.colliderect(other.hitbox)
 
 class Game(object):
 	""" Represents an instance of the game """
@@ -227,13 +238,15 @@ class Game(object):
 				self.clouds_list.update()
 				self.scorezone_list.update()
 			
-			score_hit_list = pygame.sprite.spritecollide(self.bird, self.scorezone_list, True)
+			score_hit_list = pygame.sprite.spritecollide(self.bird, self.scorezone_list, True, collided)
 			#pipe_hit_list = pygame.sprite.spritecollide(self.bird, self.pipes_list, False)
 			
 			for zone in score_hit_list:
 				self.score += 1
 				if self.score % 10 == 0 and self.pipe_gap > 145:
-					self.pipe_gap -= 3
+					self.pipe_gap -= 5
+				elif self.score % 10 == 0 and self.pipe_gap > 60:
+					self.pipe_gap -= 1
 			
 			#for pipe in pipe_hit_list:
 			#	if not self.game_over:
@@ -254,50 +267,52 @@ class Game(object):
 			#self.bird.moveTo(int(self.player_x * self.h_scale), int(self.player_y * self.v_scale))
 			self.player_on_ground = False
 			
-			pipe_hit_list = pygame.sprite.spritecollide(self.bird, self.pipes_list, False)
+			pipe_hit_list = pygame.sprite.spritecollide(self.bird, self.pipes_list, False, collided)
 			for pipe in pipe_hit_list:
-				pipe_x_pos = pipe.rect.left/self.h_scale
+				pipe_x_pos = pipe.hitbox.left/self.h_scale
 				pipe_y_pos = 0
 				
 				if isinstance(pipe, pipe_sprites.Top_pipe):
-					pipe_y_pos = pipe.rect.bottom/self.v_scale
+					pipe_y_pos = (pipe.hitbox.bottom - 50)/self.v_scale
 				else:
-					pipe_y_pos = pipe.rect.top/self.v_scale
+					pipe_y_pos = (pipe.hitbox.top + 50)/self.v_scale
 				
 				player_between_pipes = False
 				
-				if isinstance(pipe, pipe_sprites.Top_pipe) and self.player_y >= pipe_y_pos and self.player_y <= pipe_y_pos + self.pipe_gap and self.player_x >= pipe_x_pos:
+				if isinstance(pipe, pipe_sprites.Top_pipe) and self.player_y >= pipe_y_pos and self.player_y <= pipe_y_pos + self.pipe_gap - 100 and self.bird.hitbox.right >= pipe_x_pos:
 					player_between_pipes = True
-				if isinstance(pipe, pipe_sprites.Bottom_pipe) and self.player_y <= pipe_y_pos and self.player_y >= pipe_y_pos - self.pipe_gap and self.player_x >= pipe_x_pos:
+				if isinstance(pipe, pipe_sprites.Bottom_pipe) and self.player_y <= pipe_y_pos and self.player_y >= pipe_y_pos - self.pipe_gap + 100 and self.bird.hitbox.right >= pipe_x_pos:
 					player_between_pipes = True
 				
-				#if(not self.has_hit_pipe):
-				#	print('FIRST:')
-				#	self.has_hit_pipe = True
-				#print('Player pos: ' + str(self.player_x) + ', ' + str(self.player_y))
-				#if isinstance(pipe, pipe_sprites.Top_pipe):
-				#	print('Between pipe zone: ' + str(pipe_x_pos) +', '+ str(pipe_y_pos) +', '+ str(pipe_y_pos + self.pipe_gap))
-				#if isinstance(pipe, pipe_sprites.Bottom_pipe):
-				#	print('Between pipe zone: ' + str(pipe_x_pos) +', '+ str(pipe_y_pos) +', '+ str(pipe_y_pos - self.pipe_gap))
-				#print('')
+				'''if(not self.has_hit_pipe):
+					print('FIRST:')
+					self.has_hit_pipe = True
+				print('Player pos: ' + str(self.player_x) + ', ' + str(self.player_y))
+				if isinstance(pipe, pipe_sprites.Top_pipe):
+					print('Between pipe zone: ' + str(pipe_x_pos) +', '+ str(pipe_y_pos) +', '+ str(pipe_y_pos + self.pipe_gap - 100))
+				if isinstance(pipe, pipe_sprites.Bottom_pipe):
+					print('Between pipe zone: ' + str(pipe_x_pos) +', '+ str(pipe_y_pos) +', '+ str(pipe_y_pos - self.pipe_gap + 100))
+					print('Pipe top: ' + str(pipe.hitbox.top/self.v_scale))
+				print('player_between_pipes: ' + str(player_between_pipes))
+				print('')'''
 				
 				if not self.game_over:
 					self.hit_sound.play()
 					self.game_over = True
-				if self.player_velo_y > 0 and isinstance(pipe, pipe_sprites.Bottom_pipe):
+				if self.player_velo_y > 0 and isinstance(pipe, pipe_sprites.Bottom_pipe) and player_between_pipes:
 					self.player_velo_y = 0
-					self.player_y = int(pipe.rect.top/ self.v_scale) - 13
+					self.player_y = int(pipe.hitbox.top / self.v_scale) - ((BIRD_HITBOX_HEIGHT/2) - 1)
 					self.player_x += 2
 					self.bird.rot_center(-ADDED_ROT_ANGLE)
 					self.player_rot_angle -= ADDED_ROT_ANGLE % 360
 					self.player_on_ground = True
 				elif self.player_velo_y < 0 and isinstance(pipe, pipe_sprites.Top_pipe) and player_between_pipes:
 					self.player_velo_y = 0
-					self.player_y = int((pipe.rect.bottom + (.5 * BIRD_HEIGHT)) / self.v_scale) + 1
+					self.player_y = int((pipe.hitbox.bottom + (.5 * BIRD_HITBOX_HEIGHT)) / self.v_scale) + 1
 				elif not self.player_on_ground and not player_between_pipes:
-					pipe_x_pos = int(pipe.rect.left/self.h_scale)
-					pos_horiz_offset = (math.cos(math.radians(self.player_rot_angle)) * (.5 * BIRD_WIDTH)) - (math.sin(math.radians(self.player_rot_angle)) * (.5 * BIRD_HEIGHT))
-					neg_horiz_offset = (math.cos(math.radians(self.player_rot_angle)) * (.5 * BIRD_WIDTH)) - (math.sin(math.radians(self.player_rot_angle)) * (.5 * (-1 * BIRD_HEIGHT)))
+					#pipe_x_pos = int(pipe.hitbox.left/self.h_scale)
+					pos_horiz_offset = (math.cos(math.radians(self.player_rot_angle)) * (.5 * BIRD_HITBOX_WIDTH)) - (math.sin(math.radians(self.player_rot_angle)) * (.5 * BIRD_HITBOX_HEIGHT))
+					neg_horiz_offset = (math.cos(math.radians(self.player_rot_angle)) * (.5 * BIRD_HITBOX_WIDTH)) - (math.sin(math.radians(self.player_rot_angle)) * (.5 * (-1 * BIRD_HITBOX_HEIGHT)))
 					if pos_horiz_offset > neg_horiz_offset:
 						self.player_x = pipe_x_pos - pos_horiz_offset
 					else:

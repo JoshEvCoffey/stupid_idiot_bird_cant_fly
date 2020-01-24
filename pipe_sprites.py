@@ -24,6 +24,8 @@ class Top_pipe(pygame.sprite.Sprite):
 		self.rect = self.image.get_rect()
 		self.rect.x = bottom_pipe.rect.x
 		self.rect.y = bottom_pipe.rect.y - ((PIPE_HEIGHT + scorezone_height) * v_scale)
+		self.hitbox = pygame.Rect(0,0,61 * h_scale, PIPE_HEIGHT * v_scale)
+		self.hitbox.center = self.rect.center
 		self.moving = True
 	
 	def setMoving(self, new_moving_val):
@@ -31,6 +33,7 @@ class Top_pipe(pygame.sprite.Sprite):
 
 	def update(self):
 		self.rect.x -= int(5 * self.h_scale)
+		self.hitbox.center = self.rect.center
 		if self.rect.right <= 0:
 			self.kill()
 
@@ -52,6 +55,8 @@ class Bottom_pipe(pygame.sprite.Sprite):
 		MAGIC_HEIGHT_NUM = math.ceil((SCREEN_HEIGHT - (600 * self.v_scale)) / 2)
 		self.rect.x = SCREEN_WIDTH + 1
 		self.rect.y = random.randint(math.ceil(scorezone_height * self.v_scale + MAGIC_HEIGHT_NUM), math.ceil(SCREEN_HEIGHT - MAGIC_HEIGHT_NUM))
+		self.hitbox = pygame.Rect(0,0,61*self.h_scale,PIPE_HEIGHT*self.v_scale)
+		self.hitbox.center = self.rect.center
 		self.moving = True
 	
 	def setMoving(self, new_moving_val):
@@ -59,6 +64,7 @@ class Bottom_pipe(pygame.sprite.Sprite):
 
 	def update(self):
 		self.rect.x -= int(5 * self.h_scale)
+		self.hitbox.center = self.rect.center
 		if self.rect.right <= 0:
 			self.kill()
 
@@ -74,9 +80,12 @@ class Between_pipe(pygame.sprite.DirtySprite):
 		self.rect = self.image.get_rect()
 		self.rect.x = bottom_pipe.rect.x
 		self.rect.y = bottom_pipe.rect.y - int(scorezone_height * self.v_scale)
+		self.hitbox = pygame.Rect(0,0,61*self.h_scale,PIPE_HEIGHT*self.v_scale)
+		self.hitbox.center = self.rect.center
 		self.visible = 0
 
 	def update(self):
 		self.rect.x -= int(5 * self.h_scale)
+		self.hitbox.center = self.rect.center
 		if self.rect.right <= 0:
 			self.kill()
