@@ -332,6 +332,8 @@ class Game(object):
 					
 			# move the bird to its new position	
 			self.bird.moveTo(int(self.player_x * self.h_scale), int(self.player_y * self.v_scale))
+			if self.player_y * self.v_scale > self.screen_height + 50:
+				self.bird.kill()
 			
 			# outdated code
 			'''if self.game_over:
