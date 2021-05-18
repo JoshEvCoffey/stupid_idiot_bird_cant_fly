@@ -1,6 +1,7 @@
 import os
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
 import ctypes
+from screeninfo import get_monitors
 import pygame
 import shelve
 import time
@@ -441,8 +442,10 @@ def main():
 	pygame.init()
 	
 	# getting screen size and setting the game to fullscreen
-	ctypes.windll.user32.SetProcessDPIAware()
-	true_res = (ctypes.windll.user32.GetSystemMetrics(0), ctypes.windll.user32.GetSystemMetrics(1))
+	#ctypes.windll.user32.SetProcessDPIAware()
+	#true_res = (ctypes.windll.user32.GetSystemMetrics(0), ctypes.windll.user32.GetSystemMetrics(1))
+	monitor = get_monitors()[0]
+	true_res = (monitor.width, monitor.height)
 	screen = pygame.display.set_mode(true_res,pygame.FULLSCREEN)
 	screen_width, screen_height = pygame.display.get_surface().get_size()
 	
