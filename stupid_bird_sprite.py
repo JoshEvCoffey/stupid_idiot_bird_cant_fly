@@ -19,7 +19,7 @@ class Bird(pygame.sprite.Sprite):
 		super().__init__()
 		self.h_scale = h_scale
 		self.v_scale = v_scale
-		self.orig_image = pygame.image.load("resources/stupid_bird.png").convert_alpha()
+		self.orig_image = pygame.image.load(os.path.join(os.path.dirname(__file__), "resources/stupid_bird.png")).convert_alpha()
 		self.orig_image = pygame.transform.scale(self.orig_image, (int(BIRD_WIDTH * h_scale), int(BIRD_HEIGHT * v_scale)))
 		self.image = self.orig_image
 		self.rect = self.image.get_rect()

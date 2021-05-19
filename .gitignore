@@ -4,5 +4,6 @@
 /dist
 /inno
 /inno_output
+/.vscode
 setup.py
 .DS_Store

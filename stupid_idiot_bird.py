@@ -1,6 +1,5 @@
 import os
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
-import ctypes
 from screeninfo import get_monitors
 import pygame
 import shelve
@@ -114,22 +113,22 @@ class Game(object):
 		self.h_scale = horiz_scale
 		self.v_scale = verti_scale
 		
-		self.TOP_PIPE_IMAGE = pygame.image.load("resources/top_pipe.png").convert_alpha()
+		self.TOP_PIPE_IMAGE = pygame.image.load(os.path.join(os.path.dirname(__file__), "resources/top_pipe.png")).convert_alpha()
 		self.TOP_PIPE_IMAGE = pygame.transform.scale(self.TOP_PIPE_IMAGE, (int(PIPE_WIDTH * horiz_scale), int(PIPE_HEIGHT * verti_scale)))
-		self.BOTTOM_PIPE_IMAGE = pygame.image.load("resources/bottom_pipe.png").convert_alpha()
+		self.BOTTOM_PIPE_IMAGE = pygame.image.load(os.path.join(os.path.dirname(__file__), "resources/bottom_pipe.png")).convert_alpha()
 		self.BOTTOM_PIPE_IMAGE = pygame.transform.scale(self.BOTTOM_PIPE_IMAGE, (int(PIPE_WIDTH * horiz_scale), int(PIPE_HEIGHT * verti_scale)))
 		
-		self.CLOUD_1_IMAGE = pygame.image.load("resources/cloud_1.png").convert_alpha()
+		self.CLOUD_1_IMAGE = pygame.image.load(os.path.join(os.path.dirname(__file__), "resources/cloud_1.png")).convert_alpha()
 		self.CLOUD_1_IMAGE = pygame.transform.scale(self.CLOUD_1_IMAGE, (int(CLOUD_WIDTH * self.h_scale), int(CLOUD_HEIGHT * self.v_scale)))
-		self.CLOUD_2_IMAGE = pygame.image.load("resources/cloud_2.png").convert_alpha()
+		self.CLOUD_2_IMAGE = pygame.image.load(os.path.join(os.path.dirname(__file__), "resources/cloud_2.png")).convert_alpha()
 		self.CLOUD_2_IMAGE = pygame.transform.scale(self.CLOUD_2_IMAGE, (int(CLOUD_WIDTH * self.h_scale), int(CLOUD_HEIGHT * self.v_scale)))
-		self.CLOUD_3_IMAGE = pygame.image.load("resources/cloud_3.png").convert_alpha()
+		self.CLOUD_3_IMAGE = pygame.image.load(os.path.join(os.path.dirname(__file__), "resources/cloud_3.png")).convert_alpha()
 		self.CLOUD_3_IMAGE = pygame.transform.scale(self.CLOUD_3_IMAGE, (int(CLOUD_WIDTH * self.h_scale), int(CLOUD_HEIGHT * self.v_scale)))
-		self.CLOUD_4_IMAGE = pygame.image.load("resources/cloud_4.png").convert_alpha()
+		self.CLOUD_4_IMAGE = pygame.image.load(os.path.join(os.path.dirname(__file__), "resources/cloud_4.png")).convert_alpha()
 		self.CLOUD_4_IMAGE = pygame.transform.scale(self.CLOUD_4_IMAGE, (int(CLOUD_WIDTH * self.h_scale), int(CLOUD_HEIGHT * self.v_scale)))
-		self.CLOUD_5_IMAGE = pygame.image.load("resources/cloud_5.png").convert_alpha()
+		self.CLOUD_5_IMAGE = pygame.image.load(os.path.join(os.path.dirname(__file__), "resources/cloud_5.png")).convert_alpha()
 		self.CLOUD_5_IMAGE = pygame.transform.scale(self.CLOUD_5_IMAGE, (int(CLOUD_WIDTH * self.h_scale), int(CLOUD_HEIGHT * self.v_scale)))
-		self.BEST_CLOUD_IMAGE = pygame.image.load("resources/thebestcloud.png").convert_alpha()
+		self.BEST_CLOUD_IMAGE = pygame.image.load(os.path.join(os.path.dirname(__file__), "resources/thebestcloud.png")).convert_alpha()
 		self.BEST_CLOUD_IMAGE = pygame.transform.scale(self.BEST_CLOUD_IMAGE, (int(CLOUD_WIDTH * self.h_scale), int(CLOUD_HEIGHT * self.v_scale)))
 		
 		self.gravity = 15
@@ -140,8 +139,8 @@ class Game(object):
 		self.player_on_ground = False
 		self.player_between_pipes = False
 		
-		self.hop_sound = pygame.mixer.Sound("resources/hop.ogg")
-		self.hit_sound = pygame.mixer.Sound("resources/hit.ogg")
+		self.hop_sound = pygame.mixer.Sound(os.path.join(os.path.dirname(__file__), "resources/hop.ogg"))
+		self.hit_sound = pygame.mixer.Sound(os.path.join(os.path.dirname(__file__), "resources/hit.ogg"))
 		
 		self.clouds_list = pygame.sprite.Group()
 		self.pipes_list = pygame.sprite.Group()
@@ -210,7 +209,7 @@ class Game(object):
 					if not self.first_input_recieved:
 						self.first_input_recieved = True
 				# if the game is over and r or space is pressed (and not blocked) or if escape is pressed at any point
-				elif ((event.key == pygame.K_r or (event.key == pygame.K_SPACE and self.blockFrames <= 0)) and self.game_over) or event.key == pygame.K_ESCAPE:
+				elif ((event.key == pygame.K_r or ((event.key == pygame.K_SPACE or event.key == pygame.K_UP) and self.blockFrames <= 0)) and self.game_over) or event.key == pygame.K_ESCAPE:
 					# update the high score
 					try:
 						high_score_tracker = shelve.open('high_score.txt')
@@ -224,7 +223,7 @@ class Game(object):
 						high_score_tracker.close()
 					
 					# if the key was r or space, play again. Else return false and end the game.
-					if event.key == pygame.K_r or event.key == pygame.K_SPACE:
+					if event.key == pygame.K_r or event.key == pygame.K_SPACE or event.key == pygame.K_UP:
 						self.__init__(self.h_scale, self.v_scale, self.screen_width, self.screen_height, self.show_fps, self.sound_on)
 					else:
 						return False
@@ -479,23 +478,23 @@ def main():
 	vertical_scale = screen_height / 720
 	
 	# doesn't do anything anymore unless you somehow get the game into windowed mode
-	icon = pygame.image.load("resources/icon.png")
+	icon = pygame.image.load(os.path.join(os.path.dirname(__file__), "resources/icon.png"))
 	icon.set_colorkey(WHITE)
 	pygame.display.set_icon(icon)
 	pygame.display.set_caption("Stupid Idiot Bird Can't Fly")
 	
 	# load and set the positition of the title image
-	title_image = pygame.image.load("resources/title.png").convert()
+	title_image = pygame.image.load(os.path.join(os.path.dirname(__file__), "resources/title.png")).convert()
 	title_image = pygame.transform.scale(title_image, (int(TITLE_WIDTH * horizontal_scale), int(TITLE_HEIGHT * vertical_scale)))
 	title_image.set_colorkey(WHITE)
 	title_x = screen_width // 2 - int(TITLE_WIDTH * horizontal_scale / 2)
 	title_y = screen_height // 5
 	
 	# setting up button images, positions, and hitboxes
-	play_button_image = pygame.image.load("resources/play_button.png").convert()
+	play_button_image = pygame.image.load(os.path.join(os.path.dirname(__file__), "resources/play_button.png")).convert()
 	play_button_image = pygame.transform.scale(play_button_image, (int(BUTTON_WIDTH * horizontal_scale), int(BUTTON_HEIGHT * vertical_scale)))
 	play_button_image.set_colorkey(WHITE)
-	play_button_hover_image = pygame.image.load("resources/play_button_hover.png").convert()
+	play_button_hover_image = pygame.image.load(os.path.join(os.path.dirname(__file__), "resources/play_button_hover.png")).convert()
 	play_button_hover_image = pygame.transform.scale(play_button_hover_image, (int(BUTTON_WIDTH * horizontal_scale), int(BUTTON_HEIGHT * vertical_scale)))
 	play_button_hover_image.set_colorkey(WHITE)
 	
@@ -504,10 +503,10 @@ def main():
 	play_button_y_1 = title_y + int(350 * vertical_scale)
 	play_button_y_2 = play_button_y_1 + int(BUTTON_HEIGHT * vertical_scale)
 	
-	quit_button_image = pygame.image.load("resources/quit_button.png").convert()
+	quit_button_image = pygame.image.load(os.path.join(os.path.dirname(__file__), "resources/quit_button.png")).convert()
 	quit_button_image = pygame.transform.scale(quit_button_image, (int(BUTTON_WIDTH * horizontal_scale), int(BUTTON_HEIGHT * vertical_scale)))
 	quit_button_image.set_colorkey(WHITE)
-	quit_button_hover_image = pygame.image.load("resources/quit_button_hover.png").convert()
+	quit_button_hover_image = pygame.image.load(os.path.join(os.path.dirname(__file__), "resources/quit_button_hover.png")).convert()
 	quit_button_hover_image = pygame.transform.scale(quit_button_hover_image, (int(BUTTON_WIDTH * horizontal_scale), int(BUTTON_HEIGHT * vertical_scale)))
 	quit_button_hover_image.set_colorkey(WHITE)
 	
@@ -516,9 +515,9 @@ def main():
 	quit_button_y_1 = title_y + int(350 * vertical_scale)
 	quit_button_y_2 = quit_button_y_1 + int(BUTTON_HEIGHT * vertical_scale)
 	
-	sound_on_image = pygame.image.load("resources/sound_on.png").convert_alpha()
+	sound_on_image = pygame.image.load(os.path.join(os.path.dirname(__file__), "resources/sound_on.png")).convert_alpha()
 	sound_on_image = pygame.transform.scale(sound_on_image, (int(13 * horizontal_scale), int(11 * vertical_scale)))
-	sound_off_image = pygame.image.load("resources/sound_off.png").convert_alpha()
+	sound_off_image = pygame.image.load(os.path.join(os.path.dirname(__file__), "resources/sound_off.png")).convert_alpha()
 	sound_off_image = pygame.transform.scale(sound_off_image, (int(13 * horizontal_scale), int(11 * vertical_scale)))
 	sound_button_x1 = 10
 	sound_button_x2 = 10 + (int(13 * horizontal_scale))
@@ -526,7 +525,7 @@ def main():
 	sound_button_y2 = screen_height - 20
 	
 	# setting up other inital variables
-	click_sound = pygame.mixer.Sound("resources/click.ogg")
+	click_sound = pygame.mixer.Sound(os.path.join(os.path.dirname(__file__), "resources/click.ogg"))
 	
 	done = False
 	clock = pygame.time.Clock()
