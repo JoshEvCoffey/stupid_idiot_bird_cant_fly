@@ -1,0 +1,8 @@
+*.spec
+*.txt.*
+/build
+/dist
+/inno
+/inno_output
+setup.py
+.DS_Store

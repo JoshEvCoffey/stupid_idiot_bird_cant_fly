@@ -153,13 +153,25 @@ class Game(object):
 		self.all_sprites_list.add(self.bird)
 		
 		# retrieving high score
-		high_score_tracker = shelve.open('high_score.txt')
 		try:
-			self.high_score = high_score_tracker['high_score']
+			high_score_tracker = shelve.open('high_score.txt')
+			try:
+				self.high_score = high_score_tracker['high_score']
+			except:
+				self.high_score = 0
+				high_score_tracker['high_score'] = 0
+			high_score_tracker.close()
 		except:
-			self.high_score = 0
-			high_score_tracker['high_score'] = 0
-		high_score_tracker.close()
+			if not os.path.exists(os.path.expanduser('~/Documents/stupid_idiot_bird/high_score.txt')):
+				os.makedirs(os.path.expanduser('~/Documents/stupid_idiot_bird/high_score.txt'))
+			high_score_tracker = shelve.open(os.path.expanduser('~/Documents/stupid_idiot_bird/high_score.txt'))
+			try:
+				self.high_score = high_score_tracker['high_score']
+			except:
+				self.high_score = 0
+				high_score_tracker['high_score'] = 0
+			high_score_tracker.close()
+
 	
 	# set player's upward velocity to 15, reset bird's rotation to 45 degrees, play a sound if applicable
 	def hop(self):
@@ -178,10 +190,17 @@ class Game(object):
 		for event in pygame.event.get():
 			# if the game is quit, save the high score if needed then return false (ending the game)
 			if event.type == pygame.QUIT:
-				high_score_tracker = shelve.open('high_score.txt')
-				if self.high_score > high_score_tracker['high_score']:
-					high_score_tracker['high_score'] = self.high_score
-				high_score_tracker.close()
+				try:
+					high_score_tracker = shelve.open('high_score.txt')
+					if self.high_score > high_score_tracker['high_score']:
+						high_score_tracker['high_score'] = self.high_score
+					high_score_tracker.close()
+				except:
+					high_score_tracker = shelve.open(os.path.expanduser('~/Documents/stupid_idiot_bird/high_score.txt'))
+					if self.high_score > high_score_tracker['high_score']:
+						high_score_tracker['high_score'] = self.high_score
+					high_score_tracker.close()
+
 				return False
 			if event.type == pygame.KEYDOWN:
 				# if player pressed space or up arrow, hop
@@ -193,10 +212,16 @@ class Game(object):
 				# if the game is over and r or space is pressed (and not blocked) or if escape is pressed at any point
 				elif ((event.key == pygame.K_r or (event.key == pygame.K_SPACE and self.blockFrames <= 0)) and self.game_over) or event.key == pygame.K_ESCAPE:
 					# update the high score
-					high_score_tracker = shelve.open('high_score.txt')
-					if self.high_score > high_score_tracker['high_score']:
-						high_score_tracker['high_score'] = self.high_score
-					high_score_tracker.close()
+					try:
+						high_score_tracker = shelve.open('high_score.txt')
+						if self.high_score > high_score_tracker['high_score']:
+							high_score_tracker['high_score'] = self.high_score
+						high_score_tracker.close()
+					except:
+						high_score_tracker = shelve.open(os.path.expanduser('~/Documents/stupid_idiot_bird/high_score.txt'))
+						if self.high_score > high_score_tracker['high_score']:
+							high_score_tracker['high_score'] = self.high_score
+						high_score_tracker.close()
 					
 					# if the key was r or space, play again. Else return false and end the game.
 					if event.key == pygame.K_r or event.key == pygame.K_SPACE:
